@@ -1,5 +1,6 @@
 import Link from 'next/link'
-import { Instagram, Facebook, Phone, Mail, MapPin } from 'lucide-react'
+import { Phone, Mail, MapPin } from 'lucide-react'
+import { InstagramIcon, FacebookIcon } from '@/components/icons/social'
 
 export function Footer() {
   return (
@@ -17,10 +18,10 @@ export function Footer() {
             </p>
             <div className="flex space-x-4">
               <a href="#" className="w-10 h-10 rounded-full border border-sand/20 flex items-center justify-center hover:bg-gold hover:text-forest hover:border-gold transition-colors">
-                <Instagram className="w-4 h-4" />
+                <InstagramIcon className="w-4 h-4" />
               </a>
               <a href="#" className="w-10 h-10 rounded-full border border-sand/20 flex items-center justify-center hover:bg-gold hover:text-forest hover:border-gold transition-colors">
-                <Facebook className="w-4 h-4" />
+                <FacebookIcon className="w-4 h-4" />
               </a>
             </div>
           </div>
