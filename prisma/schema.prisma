@@ -1,0 +1,102 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Product {
+  id           String      @id @default(cuid())
+  name         String
+  slug         String      @unique
+  description  String
+  price        Int         // PKR
+  comparePrice Int?        
+  category     Category    @relation(fields: [categoryId], references: [id])
+  categoryId   String
+  images       String      // JSON string array for SQLite compat
+  sizes        String      // JSON string array for SQLite compat
+  colors       String      // JSON string array for SQLite compat
+  stock        Int         @default(0)
+  isVisible    Boolean     @default(true)
+  isFeatured   Boolean     @default(false)
+  createdAt    DateTime    @default(now())
+  orderItems   OrderItem[]
+  views        Int         @default(0)
+}
+
+model Category {
+  id       String    @id @default(cuid())
+  name     String    @unique
+  slug     String    @unique
+  image    String?
+  products Product[]
+}
+
+model Order {
+  id           String      @id @default(cuid())
+  orderNumber  String      @unique  
+  customer     String      // JSON string {name, phone, email?}
+  address      String      // JSON string {street, city, province, postalCode}
+  items        OrderItem[]
+  subtotal     Int
+  shippingFee  Int
+  discount     Int         @default(0)
+  total        Int
+  promoCode    String?
+  paymentMethod String     @default("cod")
+  paymentStatus String     @default("pending") // pending | paid
+  status       String      @default("pending")  // pending | confirmed | shipped | delivered | cancelled
+  notes        String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId   String
+  product   Product @relation(fields: [productId], references: [id])
+  productId String
+  name      String  
+  price     Int
+  size      String
+  color     String
+  quantity  Int
+}
+
+model User {
+  id        String    @id @default(cuid())
+  email     String    @unique
+  password  String    
+  name      String
+  phone     String?
+  role      String    @default("customer")  // customer | admin
+  addresses Address[]
+  createdAt DateTime  @default(now())
+}
+
+model Address {
+  id         String  @id @default(cuid())
+  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+  label      String  
+  street     String
+  city       String
+  province   String
+  postalCode String
+  isDefault  Boolean @default(false)
+}
+
+model PromoCode {
+  id          String    @id @default(cuid())
+  code        String    @unique
+  discount    Int       
+  minOrder    Int       @default(0)
+  maxUses     Int?
+  usedCount   Int       @default(0)
+  expiresAt   DateTime?
+  isActive    Boolean   @default(true)
+}

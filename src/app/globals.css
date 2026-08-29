@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+@theme {
+  --color-forest: #1C3A2F;
+  --color-gold: #C9A84C;
+  --color-sand: #F9F7F4;
+  --color-charcoal: #2C2C2C;
+  --color-mist: #E8E4DE;
+  --color-error: #C0392B;
+  
+  /* Update font families */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-cormorant), ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+
+  --radius-sm: 0.125rem;
+  --radius-md: 0.25rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 1rem;
+}
+
+/* Custom utilities */
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Base resets and variables */
+@layer base {
+  :root {
+    --background: var(--color-sand);
+    --foreground: var(--color-charcoal);
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-serif);
+  }
+
+  /* Prevent horizontal scroll on mobile */
+  html, body {
+    overflow-x: hidden;
+  }
+}
+
+/* Hide scrollbar for clean UI but keep functionality */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
