@@ -5,6 +5,7 @@ import { formatPrice } from '@/lib/format'
 import { ArrowRight, Truck, Shield, RefreshCw, Scissors, Award } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ProductCard } from '@/components/storefront/ProductCard'
+import { NewsletterForm } from '@/components/storefront/NewsletterForm'
 
 export const dynamic = 'force-dynamic'
 
@@ -255,17 +256,7 @@ export default async function StorefrontPage() {
           <p className="text-muted mb-8">
             Subscribe to receive updates on new collections, exclusive offers, and the latest from our workshop.
           </p>
-          <form className="flex flex-col sm:flex-row gap-4" onSubmit={e => e.preventDefault()}>
-            <input 
-              type="email" 
-              placeholder="Your email address" 
-              className="flex-1 h-12 px-4 border border-border bg-ivory focus:outline-none focus:border-accent rounded-sm text-sm"
-              required
-            />
-            <Button type="submit" className="h-12 px-8 bg-primary text-white hover:bg-accent rounded-sm text-xs tracking-[0.1em] uppercase font-semibold">
-              Subscribe
-            </Button>
-          </form>
+          <NewsletterForm />
         </div>
       </section>
 
