@@ -1,5 +1,7 @@
 import Link from 'next/link'
 import prisma from '@/lib/prisma'
+
+export const dynamic = 'force-dynamic'
 import { formatPrice } from '@/lib/format'
 import { ArrowRight, Truck, Shield, RotateCcw, Headphones } from 'lucide-react'
 import { Button } from '@/components/ui/button'

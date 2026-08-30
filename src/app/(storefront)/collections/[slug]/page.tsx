@@ -6,13 +6,7 @@ interface CollectionPageProps {
   params: Promise<{ slug: string }>
 }
 
-export async function generateStaticParams() {
-  const categories = await prisma.category.findMany({ select: { slug: true } })
-  return [
-    { slug: 'all' },
-    ...categories.map(c => ({ slug: c.slug })),
-  ]
-}
+export const dynamic = 'force-dynamic'
 
 export default async function CollectionPage({ params }: CollectionPageProps) {
   const { slug } = await params
