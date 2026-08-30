@@ -151,11 +151,11 @@ export function ProductForm({ initialData, categories }: ProductFormProps) {
             </div>
           </div>
           
-          <div className="space-y-4 pt-4 border-t border-charcoal/10">
+          <div className="space-y-4 pt-4 border-t border-border">
             <h3 className="font-medium">Images</h3>
             <div className="grid grid-cols-4 gap-4">
               {images.map((img, i) => (
-                <div key={i} className="relative aspect-square border border-charcoal/10 rounded-sm overflow-hidden group">
+                <div key={i} className="relative aspect-square border border-border rounded-sm overflow-hidden group">
                   <Image src={img} alt="" fill className="object-cover" />
                   <button 
                     type="button"
@@ -166,9 +166,9 @@ export function ProductForm({ initialData, categories }: ProductFormProps) {
                   </button>
                 </div>
               ))}
-              <label className="aspect-square border-2 border-dashed border-charcoal/20 rounded-sm flex flex-col items-center justify-center cursor-pointer hover:bg-mist/50 transition-colors">
-                <Upload className="w-6 h-6 text-charcoal/50 mb-2" />
-                <span className="text-xs text-charcoal/50">{uploading ? 'Uploading...' : 'Upload Image'}</span>
+              <label className="aspect-square border-2 border-dashed border-border rounded-sm flex flex-col items-center justify-center cursor-pointer hover:bg-ivory transition-colors">
+                <Upload className="w-6 h-6 text-muted mb-2" />
+                <span className="text-xs text-muted">{uploading ? 'Uploading...' : 'Upload Image'}</span>
                 <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} disabled={uploading} />
               </label>
             </div>
@@ -181,7 +181,7 @@ export function ProductForm({ initialData, categories }: ProductFormProps) {
             <Label htmlFor="status">Status</Label>
             <select 
               id="status"
-              className="flex h-11 w-full rounded-sm border border-charcoal/20 bg-transparent px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-forest"
+              className="flex h-11 w-full rounded-sm border border-border bg-transparent px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
               value={formData.isVisible ? "true" : "false"}
               onChange={e => setFormData({ ...formData, isVisible: e.target.value === "true" })}
             >
@@ -194,7 +194,7 @@ export function ProductForm({ initialData, categories }: ProductFormProps) {
             <Label htmlFor="category">Category</Label>
             <select 
               id="category"
-              className="flex h-11 w-full rounded-sm border border-charcoal/20 bg-transparent px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-forest"
+              className="flex h-11 w-full rounded-sm border border-border bg-transparent px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
               value={formData.categoryId}
               onChange={e => setFormData({ ...formData, categoryId: e.target.value })}
               required
@@ -211,11 +211,11 @@ export function ProductForm({ initialData, categories }: ProductFormProps) {
             <Input type="number" id="stock" value={formData.stock} onChange={e => setFormData({ ...formData, stock: e.target.value })} required />
           </div>
 
-          <div className="space-y-4 pt-4 border-t border-charcoal/10">
+          <div className="space-y-4 pt-4 border-t border-border">
             <h3 className="font-medium">Sizes</h3>
             <div className="flex flex-wrap gap-2 mb-2">
               {sizes.map(size => (
-                <span key={size} className="bg-mist px-2 py-1 text-xs rounded-sm flex items-center">
+                <span key={size} className="bg-ivory px-2 py-1 text-xs rounded-sm flex items-center">
                   {size}
                   <button type="button" onClick={() => setSizes(sizes.filter(s => s !== size))} className="ml-2 text-error"><X className="w-3 h-3" /></button>
                 </span>
@@ -227,11 +227,11 @@ export function ProductForm({ initialData, categories }: ProductFormProps) {
             </div>
           </div>
           
-          <div className="space-y-4 pt-4 border-t border-charcoal/10">
+          <div className="space-y-4 pt-4 border-t border-border">
             <h3 className="font-medium">Colors</h3>
             <div className="flex flex-wrap gap-2 mb-2">
               {colors.map(color => (
-                <span key={color.name} className="bg-mist px-2 py-1 text-xs rounded-sm flex items-center">
+                <span key={color.name} className="bg-ivory px-2 py-1 text-xs rounded-sm flex items-center">
                   <span className="w-3 h-3 rounded-full mr-1" style={{ backgroundColor: color.hex }} />
                   {color.name}
                   <button type="button" onClick={() => setColors(colors.filter(c => c.name !== color.name))} className="ml-2 text-error"><X className="w-3 h-3" /></button>
@@ -248,7 +248,7 @@ export function ProductForm({ initialData, categories }: ProductFormProps) {
         </div>
       </div>
 
-      <div className="flex justify-end pt-6 border-t border-charcoal/10 space-x-4">
+      <div className="flex justify-end pt-6 border-t border-border space-x-4">
         <Button type="button" variant="outline" onClick={() => router.back()}>Cancel</Button>
         <Button type="submit" disabled={loading}>{loading ? 'Saving...' : 'Save Product'}</Button>
       </div>

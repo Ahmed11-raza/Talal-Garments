@@ -30,8 +30,7 @@ export default function RegisterPage() {
       if (!res.ok) throw new Error(data.error || 'Registration failed')
 
       toast.success('Account created successfully')
-      
-      // Auto sign-in
+
       const signInResult = await signIn('credentials', {
         email: form.email,
         password: form.password,
@@ -52,57 +51,41 @@ export default function RegisterPage() {
   }
 
   return (
-    <section className="container mx-auto px-4 py-24 max-w-md">
-      <div className="text-center mb-8 space-y-2">
-        <h1 className="font-serif text-4xl text-forest">Create Account</h1>
-        <p className="text-charcoal/60">Join Talal Garments for faster checkout</p>
+    <section className="min-h-[70vh] flex items-center justify-center container mx-auto px-4 py-24">
+      <div className="w-full max-w-md">
+        <div className="text-center mb-10 space-y-3">
+          <h1 className="font-serif text-4xl text-primary">Create Account</h1>
+          <p className="text-muted">Join Talal Garments for faster checkout</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="name">Full Name</Label>
+            <Input id="name" className="h-12 rounded-sm border-border" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input id="email" type="email" className="h-12 rounded-sm border-border" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <Input id="password" type="password" className="h-12 rounded-sm border-border" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} required minLength={6} />
+          </div>
+
+          <Button type="submit" size="lg" className="w-full h-14 bg-primary hover:bg-accent rounded-sm text-xs tracking-[0.15em] uppercase font-semibold" disabled={loading}>
+            {loading ? <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Creating Account...</> : 'Create Account'}
+          </Button>
+
+          <p className="text-center text-sm text-muted">
+            Already have an account?{' '}
+            <Link href="/account/login" className="text-accent font-medium hover:text-primary transition-colors">
+              Sign In
+            </Link>
+          </p>
+        </form>
       </div>
-
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="space-y-2">
-          <Label htmlFor="name">Full Name</Label>
-          <Input
-            id="name"
-            value={form.name}
-            onChange={e => setForm({ ...form, name: e.target.value })}
-            required
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
-          <Input
-            id="email"
-            type="email"
-            value={form.email}
-            onChange={e => setForm({ ...form, email: e.target.value })}
-            required
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
-          <Input
-            id="password"
-            type="password"
-            value={form.password}
-            onChange={e => setForm({ ...form, password: e.target.value })}
-            required
-            minLength={6}
-          />
-        </div>
-
-        <Button type="submit" size="lg" className="w-full" disabled={loading}>
-          {loading ? <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Creating Account...</> : 'Create Account'}
-        </Button>
-
-        <p className="text-center text-sm text-charcoal/60">
-          Already have an account?{' '}
-          <Link href="/account/login" className="text-forest font-medium hover:text-gold transition-colors">
-            Sign In
-          </Link>
-        </p>
-      </form>
     </section>
   )
 }

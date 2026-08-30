@@ -19,8 +19,8 @@ export default async function AdminOrderDetail({ params }: { params: Promise<{ i
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-serif font-bold text-forest">Order {order.orderNumber}</h1>
-        <p className="text-charcoal/70">Placed on {new Date(order.createdAt).toLocaleString()}</p>
+        <h1 className="text-3xl font-serif font-bold text-primary">Order {order.orderNumber}</h1>
+        <p className="text-muted">Placed on {new Date(order.createdAt).toLocaleString()}</p>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-8">
@@ -32,24 +32,24 @@ export default async function AdminOrderDetail({ params }: { params: Promise<{ i
             <CardContent>
               <div className="space-y-4">
                 {order.items.map(item => (
-                  <div key={item.id} className="flex gap-4 border-b border-charcoal/10 pb-4 last:border-0 last:pb-0">
+                  <div key={item.id} className="flex gap-4 border-b border-border pb-4 last:border-0 last:pb-0">
                     <div className="flex-1">
-                      <p className="font-medium text-forest">{item.product.name}</p>
-                      <p className="text-sm text-charcoal/60">
+                      <p className="font-medium text-primary">{item.product.name}</p>
+                      <p className="text-sm text-muted">
                         {item.color} · {item.size}
                       </p>
                     </div>
                     <div className="text-right">
                       <p className="font-medium">{formatPrice(item.price)}</p>
-                      <p className="text-sm text-charcoal/60">Qty: {item.quantity}</p>
+                      <p className="text-sm text-muted">Qty: {item.quantity}</p>
                     </div>
                   </div>
                 ))}
               </div>
-              <div className="mt-6 pt-6 border-t border-charcoal/10 space-y-2 text-sm">
+              <div className="mt-6 pt-6 border-t border-border space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-charcoal/60">Total</span>
-                  <span className="font-medium text-lg text-forest">{formatPrice(order.total)}</span>
+                  <span className="text-muted">Total</span>
+                  <span className="font-medium text-lg text-primary">{formatPrice(order.total)}</span>
                 </div>
               </div>
             </CardContent>
@@ -72,20 +72,20 @@ export default async function AdminOrderDetail({ params }: { params: Promise<{ i
             </CardHeader>
             <CardContent className="space-y-4 text-sm">
               <div>
-                <p className="font-medium text-forest">Contact</p>
-                <p className="text-charcoal/70">{customer.name}</p>
-                <p className="text-charcoal/70">{customer.phone}</p>
-                {customer.email && <p className="text-charcoal/70">{customer.email}</p>}
+                <p className="font-medium text-primary">Contact</p>
+                <p className="text-muted">{customer.name}</p>
+                <p className="text-muted">{customer.phone}</p>
+                {customer.email && <p className="text-muted">{customer.email}</p>}
               </div>
               <div>
-                <p className="font-medium text-forest">Shipping Address</p>
-                <p className="text-charcoal/70">{address.street}</p>
-                <p className="text-charcoal/70">{address.city}, {address.province}</p>
-                {address.postalCode && <p className="text-charcoal/70">{address.postalCode}</p>}
+                <p className="font-medium text-primary">Shipping Address</p>
+                <p className="text-muted">{address.street}</p>
+                <p className="text-muted">{address.city}, {address.province}</p>
+                {address.postalCode && <p className="text-muted">{address.postalCode}</p>}
               </div>
               <div>
-                <p className="font-medium text-forest">Payment Method</p>
-                <p className="text-charcoal/70 uppercase">{order.paymentMethod}</p>
+                <p className="font-medium text-primary">Payment Method</p>
+                <p className="text-muted uppercase">{order.paymentMethod}</p>
               </div>
             </CardContent>
           </Card>

@@ -3,20 +3,20 @@ import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-sm text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-forest disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-sm text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
         default:
-          "bg-forest text-sand shadow hover:bg-forest/90",
+          "bg-primary text-white shadow hover:bg-primary/90",
         destructive:
-          "bg-error text-sand shadow-sm hover:bg-error/90",
+          "bg-error text-white shadow-sm hover:bg-error/90",
         outline:
-          "border border-forest bg-transparent shadow-sm hover:bg-forest hover:text-sand",
+          "border border-primary bg-transparent shadow-sm hover:bg-primary hover:text-white",
         secondary:
-          "bg-gold text-forest shadow-sm hover:bg-gold/80",
-        ghost: "hover:bg-mist hover:text-forest",
-        link: "text-forest underline-offset-4 hover:underline",
+          "bg-accent text-white shadow-sm hover:bg-accent/80",
+        ghost: "hover:bg-ivory hover:text-primary",
+        link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
         default: "h-11 px-6 py-2",

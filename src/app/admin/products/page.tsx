@@ -15,8 +15,8 @@ export default async function AdminProducts() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-serif font-bold text-forest">Products</h1>
-          <p className="text-charcoal/70">Manage your store's inventory.</p>
+          <h1 className="text-3xl font-serif font-bold text-primary">Products</h1>
+          <p className="text-primary/70">Manage your store's inventory.</p>
         </div>
         <Button asChild>
           <Link href="/admin/products/new">
@@ -26,9 +26,9 @@ export default async function AdminProducts() {
         </Button>
       </div>
 
-      <div className="border border-charcoal/10 rounded-sm overflow-hidden bg-white">
+      <div className="border border-border/10 rounded-sm overflow-hidden bg-white">
         <table className="w-full text-sm text-left">
-          <thead className="bg-mist text-forest uppercase font-medium">
+          <thead className="bg-white text-primary uppercase font-medium">
             <tr>
               <th className="px-6 py-4">Product</th>
               <th className="px-6 py-4">Category</th>
@@ -44,16 +44,16 @@ export default async function AdminProducts() {
               const firstImage = images.length > 0 ? images[0] : null
               
               return (
-                <tr key={product.id} className="border-t border-charcoal/10 hover:bg-mist/30">
+                <tr key={product.id} className="border-t border-border/10 hover:bg-white/30">
                   <td className="px-6 py-4 flex items-center space-x-4">
                     {firstImage ? (
-                      <div className="w-12 h-12 relative rounded-sm overflow-hidden bg-sand">
+                      <div className="w-12 h-12 relative rounded-sm overflow-hidden bg-ivory">
                         <Image src={firstImage} alt={product.name} fill className="object-cover" />
                       </div>
                     ) : (
-                      <div className="w-12 h-12 rounded-sm bg-sand" />
+                      <div className="w-12 h-12 rounded-sm bg-ivory" />
                     )}
-                    <span className="font-medium text-forest">{product.name}</span>
+                    <span className="font-medium text-primary">{product.name}</span>
                   </td>
                   <td className="px-6 py-4">{product.category.name}</td>
                   <td className="px-6 py-4">{formatPrice(product.price)}</td>
@@ -63,7 +63,7 @@ export default async function AdminProducts() {
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`px-2 py-1 rounded-sm text-xs font-medium uppercase ${product.isVisible ? 'bg-forest/10 text-forest' : 'bg-charcoal/10 text-charcoal'}`}>
+                    <span className={`px-2 py-1 rounded-sm text-xs font-medium uppercase ${product.isVisible ? 'bg-primary/10 text-primary' : 'bg-primary/10 text-primary'}`}>
                       {product.isVisible ? 'Visible' : 'Hidden'}
                     </span>
                   </td>

@@ -1,7 +1,7 @@
 export function formatPrice(price: number): string {
   // Prices are whole PKR. We do NOT divide by 100. 
-  // 2800 = Rs 2,800
-  return `Rs ${price.toLocaleString('en-PK')}`
+  // 2800 = Rs. 2,800
+  return `Rs. ${price.toLocaleString('en-PK')}`
 }
 
 export function generateOrderNumber(): string {

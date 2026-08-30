@@ -39,7 +39,7 @@ export function OrderStatusForm({ orderId, initialStatus }: OrderStatusFormProps
   return (
     <div className="space-y-4">
       <select
-        className="flex h-11 w-full rounded-sm border border-charcoal/20 bg-transparent px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-forest"
+        className="flex h-11 w-full rounded-sm border border-border bg-transparent px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
         value={status}
         onChange={e => setStatus(e.target.value)}
       >

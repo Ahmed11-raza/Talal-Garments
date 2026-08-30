@@ -1,175 +1,274 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import prisma from '@/lib/prisma'
-
-export const dynamic = 'force-dynamic'
 import { formatPrice } from '@/lib/format'
-import { ArrowRight, Truck, Shield, RotateCcw, Headphones } from 'lucide-react'
+import { ArrowRight, Truck, Shield, RefreshCw, Scissors, Award } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ProductCard } from '@/components/storefront/ProductCard'
 
-export default async function HomePage() {
-  const [featuredProducts, categories] = await Promise.all([
-    prisma.product.findMany({
-      where: { isFeatured: true, isVisible: true },
-      include: { category: true },
-      take: 4,
-    }),
-    prisma.category.findMany({ include: { _count: { select: { products: true } } } })
-  ])
+export const dynamic = 'force-dynamic'
+
+export default async function StorefrontPage() {
+  const featuredProducts = await prisma.product.findMany({
+    where: { isFeatured: true, isVisible: true },
+    include: { category: true },
+    take: 4,
+  })
+
+  const newArrivals = await prisma.product.findMany({
+    where: { isVisible: true },
+    include: { category: true },
+    orderBy: { createdAt: 'desc' },
+    take: 8,
+  })
 
   return (
-    <>
-      {/* Marquee Trust Strip */}
-      <div className="bg-forest text-sand py-2 overflow-hidden">
-        <div className="animate-marquee whitespace-nowrap flex items-center space-x-12 text-xs tracking-wider">
-          <span className="flex items-center gap-2"><Truck className="w-3.5 h-3.5 text-gold" /> FREE DELIVERY OVER RS 3,000</span>
-          <span>•</span>
-          <span className="flex items-center gap-2"><Shield className="w-3.5 h-3.5 text-gold" /> 100% AUTHENTIC FABRICS</span>
-          <span>•</span>
-          <span className="flex items-center gap-2"><RotateCcw className="w-3.5 h-3.5 text-gold" /> 7-DAY EASY RETURNS</span>
-          <span>•</span>
-          <span className="flex items-center gap-2"><Headphones className="w-3.5 h-3.5 text-gold" /> WHATSAPP SUPPORT</span>
-          <span>•</span>
-          <span className="flex items-center gap-2"><Truck className="w-3.5 h-3.5 text-gold" /> FREE DELIVERY OVER RS 3,000</span>
-          <span>•</span>
-          <span className="flex items-center gap-2"><Shield className="w-3.5 h-3.5 text-gold" /> 100% AUTHENTIC FABRICS</span>
-          <span>•</span>
-          <span className="flex items-center gap-2"><RotateCcw className="w-3.5 h-3.5 text-gold" /> 7-DAY EASY RETURNS</span>
-          <span>•</span>
-          <span className="flex items-center gap-2"><Headphones className="w-3.5 h-3.5 text-gold" /> WHATSAPP SUPPORT</span>
+    <div className="flex flex-col min-h-screen">
+      
+      {/* 1. Hero Section - Performance First Split Layout */}
+      <section className="relative w-full min-h-[85vh] flex flex-col md:flex-row bg-ivory">
+        {/* Text Content */}
+        <div className="flex-1 flex flex-col justify-center px-6 md:px-16 lg:px-24 py-20 z-10">
+          <div className="max-w-xl animate-fade-up">
+            <div className="inline-flex items-center gap-3 mb-8">
+              <span className="h-px w-8 bg-accent" />
+              <span className="text-xs tracking-[0.25em] uppercase font-semibold text-accent">Est. 1988</span>
+            </div>
+            <h1 className="font-serif text-5xl md:text-6xl lg:text-7xl leading-[1.1] text-primary mb-6">
+              Craftsmanship <br className="hidden md:block" />
+              <span className="italic font-light">transferred through</span> <br className="hidden md:block" />
+              generations.
+            </h1>
+            <p className="text-muted text-lg mb-10 max-w-md">
+              Three generations of master tailors. Premium stitched and unstitched clothing delivered nationwide across Pakistan.
+            </p>
+            <div className="flex flex-wrap gap-4">
+              <Button asChild size="lg" className="bg-primary text-white hover:bg-accent hover:text-white rounded-none px-8 h-14 text-xs tracking-[0.15em] uppercase font-semibold">
+                <Link href="/collections/all">Shop Collection</Link>
+              </Button>
+              <Button asChild size="lg" variant="outline" className="border-primary text-primary hover:bg-primary hover:text-white rounded-none px-8 h-14 text-xs tracking-[0.15em] uppercase font-semibold">
+                <Link href="/collections/mens-stitched">Men's Wear</Link>
+              </Button>
+            </div>
+          </div>
         </div>
-      </div>
-
-      {/* Hero Section */}
-      <section className="relative min-h-[85vh] flex items-center bg-forest overflow-hidden">
-        {/* Decorative oversized numeral */}
-        <div className="absolute right-0 top-1/2 -translate-y-1/2 text-[40rem] font-serif font-bold text-sand/[0.03] leading-none select-none pointer-events-none" aria-hidden="true">
-          01
+        
+        {/* Hero Image - Optimized */}
+        <div className="flex-1 relative min-h-[50vh] md:min-h-full">
+          <Image
+            src="https://images.unsplash.com/photo-1593032465175-481ac7f401a0?q=80&w=1600&auto=format&fit=crop"
+            alt="Premium menswear tailoring"
+            fill
+            priority
+            sizes="(max-width: 768px) 100vw, 50vw"
+            className="object-cover object-[center_30%]"
+          />
         </div>
+      </section>
 
-        <div className="container mx-auto px-4 py-20 grid lg:grid-cols-2 gap-12 items-center relative z-10">
-          <div className="space-y-8">
-            <div className="space-y-2">
-              <p className="text-gold text-sm tracking-[0.3em] uppercase font-medium">Since 1998 · Attock, Pakistan</p>
-              <h1 className="font-serif text-5xl md:text-7xl lg:text-8xl text-sand leading-[0.9] tracking-tight">
-                منتخب
-                <br />
-                <span className="text-gold">انداز</span>
-              </h1>
-              <p className="text-sand/70 text-lg md:text-xl max-w-md pt-4 leading-relaxed">
-                Craftsmanship passed down through generations. Every stitch, every thread — chosen with intention.
+      {/* 2. Trust Strip */}
+      <section className="border-y border-border bg-white">
+        <div className="container mx-auto px-4 py-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center divide-x divide-border">
+            <div className="flex flex-col items-center gap-3 px-4">
+              <Truck className="w-5 h-5 text-accent" />
+              <h3 className="text-xs tracking-[0.1em] uppercase font-bold text-primary">Nationwide Delivery</h3>
+              <p className="text-xs text-muted">Free over Rs. 5,000</p>
+            </div>
+            <div className="flex flex-col items-center gap-3 px-4">
+              <Shield className="w-5 h-5 text-accent" />
+              <h3 className="text-xs tracking-[0.1em] uppercase font-bold text-primary">Cash on Delivery</h3>
+              <p className="text-xs text-muted">Pay at your doorstep</p>
+            </div>
+            <div className="flex flex-col items-center gap-3 px-4">
+              <RefreshCw className="w-5 h-5 text-accent" />
+              <h3 className="text-xs tracking-[0.1em] uppercase font-bold text-primary">7-Day Returns</h3>
+              <p className="text-xs text-muted">Hassle-free exchange</p>
+            </div>
+            <div className="flex flex-col items-center gap-3 px-4">
+              <Scissors className="w-5 h-5 text-accent" />
+              <h3 className="text-xs tracking-[0.1em] uppercase font-bold text-primary">Master Tailoring</h3>
+              <p className="text-xs text-muted">35+ years of trust</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 3. Shop by Category */}
+      <section className="py-24 bg-ivory">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <span className="text-accent text-xs tracking-[0.2em] uppercase font-bold mb-4 block">The Collections</span>
+            <h2 className="font-serif text-4xl text-primary">Shop by Category</h2>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Men's Stitched */}
+            <Link href="/collections/mens-stitched" className="group relative aspect-[4/5] overflow-hidden bg-black rounded-sm">
+              <Image src="https://images.unsplash.com/photo-1594938298596-70f594f742f8?q=80&w=800&auto=format&fit=crop" alt="Men's Stitched" fill className="object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-8">
+                <h3 className="text-white font-serif text-3xl mb-2">Men's Stitched</h3>
+                <span className="text-white/80 text-sm tracking-wider uppercase flex items-center gap-2 group-hover:text-accent transition-colors">
+                  Explore Collection <ArrowRight className="w-4 h-4" />
+                </span>
+              </div>
+            </Link>
+
+            {/* Men's Unstitched */}
+            <Link href="/collections/mens-unstitched" className="group relative aspect-[4/5] overflow-hidden bg-black rounded-sm">
+              <Image src="https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?q=80&w=800&auto=format&fit=crop" alt="Men's Unstitched" fill className="object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-8">
+                <h3 className="text-white font-serif text-3xl mb-2">Men's Unstitched</h3>
+                <span className="text-white/80 text-sm tracking-wider uppercase flex items-center gap-2 group-hover:text-accent transition-colors">
+                  Explore Collection <ArrowRight className="w-4 h-4" />
+                </span>
+              </div>
+            </Link>
+
+            {/* Women's Collection */}
+            <Link href="/collections/womens-stitched" className="group relative aspect-[4/5] overflow-hidden bg-black rounded-sm lg:col-span-1 md:col-span-2">
+              <Image src="https://images.unsplash.com/photo-1610419356163-fdfbe17cfbcf?q=80&w=800&auto=format&fit=crop" alt="Women's Collection" fill className="object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-8">
+                <h3 className="text-white font-serif text-3xl mb-2">Women's Collection</h3>
+                <span className="text-white/80 text-sm tracking-wider uppercase flex items-center gap-2 group-hover:text-accent transition-colors">
+                  Explore Collection <ArrowRight className="w-4 h-4" />
+                </span>
+              </div>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* 4. Featured Products */}
+      {featuredProducts.length > 0 && (
+        <section className="py-24 bg-white">
+          <div className="container mx-auto px-4">
+            <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
+              <div>
+                <span className="text-accent text-xs tracking-[0.2em] uppercase font-bold mb-4 block">Handpicked for You</span>
+                <h2 className="font-serif text-4xl text-primary">Featured Pieces</h2>
+              </div>
+              <Link href="/collections/all" className="text-xs tracking-[0.1em] uppercase font-bold text-primary hover:text-accent flex items-center gap-2 transition-colors pb-2">
+                View All <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+            
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-12">
+              {featuredProducts.map(product => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* 5. Heritage Story */}
+      <section className="relative py-32 overflow-hidden bg-primary text-white">
+        <div className="absolute inset-0 z-0 opacity-20">
+          <Image 
+            src="https://images.unsplash.com/photo-1626497764746-6dc36546b388?q=80&w=1600&auto=format&fit=crop"
+            alt="Tailoring workshop"
+            fill
+            className="object-cover grayscale"
+          />
+        </div>
+        <div className="container relative z-10 mx-auto px-4 text-center max-w-3xl">
+          <span className="text-accent text-xs tracking-[0.2em] uppercase font-bold mb-6 block">Our Legacy</span>
+          <h2 className="font-serif text-4xl md:text-5xl mb-8 leading-tight">
+            Three generations of master craftsmen, preserving the art of tailoring since 1988.
+          </h2>
+          <p className="text-white/70 text-lg mb-10">
+            What started as a small tailoring shop in Attock has grown into a nationwide brand. 
+            We source the finest fabrics and apply decades of expertise to every stitch, ensuring 
+            garments that stand the test of time.
+          </p>
+          <Button asChild variant="outline" className="border-accent text-accent hover:bg-accent hover:text-white rounded-none px-8 h-12 text-xs tracking-[0.15em] uppercase font-semibold bg-transparent">
+            <Link href="/collections/all">Discover Our Craft</Link>
+          </Button>
+        </div>
+      </section>
+
+      {/* 6. New Arrivals (Horizontal Scroll) */}
+      {newArrivals.length > 0 && (
+        <section className="py-24 bg-ivory overflow-hidden">
+          <div className="container mx-auto px-4 mb-12">
+            <h2 className="font-serif text-4xl text-primary">New Arrivals</h2>
+          </div>
+          
+          <div className="container mx-auto px-4">
+            <div className="flex overflow-x-auto pb-8 gap-6 no-scrollbar snap-x">
+              {newArrivals.map(product => (
+                <div key={product.id} className="w-[280px] md:w-[320px] shrink-0 snap-start">
+                  <ProductCard product={product} />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* 7. Customer Promise */}
+      <section className="py-24 bg-white border-t border-border">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <span className="text-accent text-xs tracking-[0.2em] uppercase font-bold mb-4 block">Our Promise</span>
+            <h2 className="font-serif text-4xl text-primary">Why Talal Garments</h2>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
+            <div className="flex flex-col items-center text-center gap-4">
+              <Award className="w-7 h-7 text-accent" />
+              <h3 className="text-sm tracking-[0.1em] uppercase font-bold text-primary">Quality Fabrics</h3>
+              <p className="text-sm text-muted leading-relaxed">
+                Sourced from trusted mills, every fabric is chosen for durability, comfort, and finish.
               </p>
             </div>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Button size="lg" variant="secondary" asChild>
-                <Link href="/collections/all">
-                  Shop the Collection
-                  <ArrowRight className="w-5 h-5 ml-2" />
-                </Link>
-              </Button>
-              <Button size="lg" variant="outline" className="border-sand/30 text-sand hover:bg-sand hover:text-forest" asChild>
-                <Link href="/collections/kurta-shalwar">
-                  Kurta Shalwar
-                </Link>
-              </Button>
+            <div className="flex flex-col items-center text-center gap-4">
+              <Scissors className="w-7 h-7 text-accent" />
+              <h3 className="text-sm tracking-[0.1em] uppercase font-bold text-primary">Master Tailoring</h3>
+              <p className="text-sm text-muted leading-relaxed">
+                Three generations of hands-on craftsmanship behind every stitch, seam, and cut.
+              </p>
             </div>
-          </div>
-
-          {/* Hero image placeholder — will show the first featured product image when available */}
-          <div className="hidden lg:block aspect-[3/4] bg-sand/5 rounded-sm relative overflow-hidden">
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="text-center space-y-4">
-                <div className="w-24 h-24 mx-auto border border-gold/30 rounded-full flex items-center justify-center">
-                  <span className="font-serif text-4xl text-gold">T</span>
-                </div>
-                <p className="text-sand/40 text-sm tracking-widest uppercase">Premium Collection</p>
-              </div>
+            <div className="flex flex-col items-center text-center gap-4">
+              <Truck className="w-7 h-7 text-accent" />
+              <h3 className="text-sm tracking-[0.1em] uppercase font-bold text-primary">Nationwide Delivery</h3>
+              <p className="text-sm text-muted leading-relaxed">
+                From Attock to every corner of Pakistan, with cash on delivery available everywhere.
+              </p>
+            </div>
+            <div className="flex flex-col items-center text-center gap-4">
+              <RefreshCw className="w-7 h-7 text-accent" />
+              <h3 className="text-sm tracking-[0.1em] uppercase font-bold text-primary">Easy Returns</h3>
+              <p className="text-sm text-muted leading-relaxed">
+                Not satisfied? Unworn, unwashed items can be returned or exchanged within 7 days.
+              </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Categories Section with Oversized Vertical Numeral */}
-      <section className="py-24 container mx-auto px-4">
-        <div className="flex items-end justify-between mb-16">
-          <div className="space-y-2">
-            <p className="text-gold text-sm tracking-[0.3em] uppercase font-medium">Browse by</p>
-            <h2 className="font-serif text-4xl md:text-5xl text-forest">Categories</h2>
-          </div>
-          <Link href="/collections/all" className="text-sm text-forest hover:text-gold transition-colors flex items-center gap-2">
-            View All <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {categories.map((category, index) => (
-            <Link 
-              key={category.id} 
-              href={`/collections/${category.slug}`}
-              className="group relative bg-mist/50 aspect-[3/4] rounded-sm overflow-hidden flex flex-col justify-end p-8 transition-all hover:shadow-lg"
-            >
-              {/* Oversized category numeral */}
-              <span className="absolute top-4 right-6 font-serif text-[8rem] leading-none font-bold text-forest/[0.06] select-none pointer-events-none transition-colors group-hover:text-gold/[0.12]" aria-hidden="true">
-                {String(index + 1).padStart(2, '0')}
-              </span>
-              
-              <div className="relative z-10">
-                <h3 className="font-serif text-2xl text-forest group-hover:text-gold transition-colors">{category.name}</h3>
-                <p className="text-charcoal/60 text-sm mt-1">{category._count.products} products</p>
-              </div>
-            </Link>
-          ))}
+      {/* 8. Newsletter CTA */}
+      <section className="py-24 bg-white border-t border-border">
+        <div className="container mx-auto px-4 max-w-2xl text-center">
+          <h2 className="font-serif text-3xl mb-4 text-primary">Join the Talal Family</h2>
+          <p className="text-muted mb-8">
+            Subscribe to receive updates on new collections, exclusive offers, and the latest from our workshop.
+          </p>
+          <form className="flex flex-col sm:flex-row gap-4" onSubmit={e => e.preventDefault()}>
+            <input 
+              type="email" 
+              placeholder="Your email address" 
+              className="flex-1 h-12 px-4 border border-border bg-ivory focus:outline-none focus:border-accent rounded-sm text-sm"
+              required
+            />
+            <Button type="submit" className="h-12 px-8 bg-primary text-white hover:bg-accent rounded-sm text-xs tracking-[0.1em] uppercase font-semibold">
+              Subscribe
+            </Button>
+          </form>
         </div>
       </section>
 
-      {/* Featured Products */}
-      <section className="py-24 bg-mist/30">
-        <div className="container mx-auto px-4">
-          <div className="flex items-end justify-between mb-16">
-            <div className="space-y-2">
-              <p className="text-gold text-sm tracking-[0.3em] uppercase font-medium">Hand-picked</p>
-              <h2 className="font-serif text-4xl md:text-5xl text-forest">Featured</h2>
-            </div>
-            <Link href="/collections/all" className="text-sm text-forest hover:text-gold transition-colors flex items-center gap-2">
-              See More <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-            {featuredProducts.map(product => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Value Proposition Banner */}
-      <section className="py-20 bg-forest text-sand">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 text-center">
-            <div className="space-y-3">
-              <Truck className="w-8 h-8 text-gold mx-auto" />
-              <h3 className="font-serif text-xl">Nationwide Delivery</h3>
-              <p className="text-sand/60 text-sm">Free shipping on orders above Rs 3,000 across Pakistan</p>
-            </div>
-            <div className="space-y-3">
-              <Shield className="w-8 h-8 text-gold mx-auto" />
-              <h3 className="font-serif text-xl">Quality Guarantee</h3>
-              <p className="text-sand/60 text-sm">Authentic fabrics sourced from trusted mills</p>
-            </div>
-            <div className="space-y-3">
-              <RotateCcw className="w-8 h-8 text-gold mx-auto" />
-              <h3 className="font-serif text-xl">Easy Returns</h3>
-              <p className="text-sand/60 text-sm">7-day hassle-free return policy on all items</p>
-            </div>
-            <div className="space-y-3">
-              <Headphones className="w-8 h-8 text-gold mx-auto" />
-              <h3 className="font-serif text-xl">WhatsApp Support</h3>
-              <p className="text-sand/60 text-sm">Direct help from our team, in Urdu or English</p>
-            </div>
-          </div>
-        </div>
-      </section>
-    </>
+    </div>
   )
 }

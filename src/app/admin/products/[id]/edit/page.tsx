@@ -17,11 +17,11 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-serif font-bold text-forest">Edit Product</h1>
-        <p className="text-charcoal/70">Update product information.</p>
+        <h1 className="text-3xl font-serif font-bold text-primary">Edit Product</h1>
+        <p className="text-muted">Update product information.</p>
       </div>
       
-      <div className="bg-white p-6 border border-charcoal/10 rounded-sm">
+      <div className="bg-white p-6 border border-border rounded-sm">
         <ProductForm initialData={product} categories={categories} />
       </div>
     </div>
