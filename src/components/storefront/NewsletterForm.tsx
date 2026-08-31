@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from 'react'
-import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 
 export function NewsletterForm() {
@@ -14,18 +13,21 @@ export function NewsletterForm() {
   }
 
   return (
-    <form className="flex flex-col sm:flex-row gap-4" onSubmit={handleSubmit}>
+    <form className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto" onSubmit={handleSubmit}>
       <input
         type="email"
         value={email}
         onChange={e => setEmail(e.target.value)}
         placeholder="Your email address"
-        className="flex-1 h-12 px-4 border border-border bg-ivory focus:outline-none focus:border-accent rounded-sm text-sm"
         required
+        className="flex-1 h-12 px-4 border border-border bg-white text-sm focus:outline-none focus:border-accent rounded-none"
       />
-      <Button type="submit" className="h-12 px-8 bg-primary text-white hover:bg-accent rounded-sm text-xs tracking-[0.1em] uppercase font-semibold">
+      <button
+        type="submit"
+        className="h-12 px-6 bg-primary text-white text-[11px] tracking-[0.1em] uppercase font-semibold hover:bg-accent transition-colors shrink-0"
+      >
         Subscribe
-      </Button>
+      </button>
     </form>
   )
 }
