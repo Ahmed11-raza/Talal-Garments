@@ -21,7 +21,7 @@ export const productSchema = z.object({
 export const checkoutSchema = z.object({
   customer: z.object({
     name: z.string().min(2, 'Name is required'),
-    phone: z.string().regex(/^(\+92|0)?3\d{9}$/, 'Valid Pakistani mobile number required'),
+    phone: z.string().min(10, 'Valid phone number required (min 10 digits)'),
     email: z.string().email('Valid email required').optional().or(z.literal('')),
   }),
   address: z.object({
