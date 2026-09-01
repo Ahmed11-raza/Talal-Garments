@@ -5,21 +5,36 @@ import { Plus, Edit } from 'lucide-react'
 import { formatPrice } from '@/lib/format'
 import Image from 'next/image'
 import { DeleteProductButton } from '@/components/admin/DeleteProductButton'
+import { BulkDiscountManager } from '@/components/admin/BulkDiscountManager'
 
 export const dynamic = 'force-dynamic'
 
 export default async function AdminProducts() {
-  const products = await prisma.product.findMany({
-    orderBy: { createdAt: 'desc' },
-    include: { category: true }
-  })
+  let products: any[] = []
+  let categories: any[] = []
+
+  try {
+    const [prods, cats] = await Promise.all([
+      prisma.product.findMany({
+        orderBy: { createdAt: 'desc' },
+        include: { category: true }
+      }),
+      prisma.category.findMany({ orderBy: { name: 'asc' } })
+    ])
+    products = prods
+    categories = cats
+  } catch (error) {
+    console.error("Admin products DB fetch error:", error)
+    products = []
+    categories = []
+  }
 
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-serif font-bold text-primary">Products</h1>
-          <p className="text-muted">Manage your store's inventory and discard items.</p>
+          <h1 className="text-3xl font-serif font-bold text-primary">Products & Discounts</h1>
+          <p className="text-muted">Manage inventory, apply category & flat discounts, or add new items.</p>
         </div>
         <Button asChild className="bg-primary hover:bg-accent text-white">
           <Link href="/admin/products/new">
@@ -29,22 +44,27 @@ export default async function AdminProducts() {
         </Button>
       </div>
 
+      {/* Bulk Category & Flat Discount Manager */}
+      <BulkDiscountManager categories={categories} />
+
+      {/* Products Inventory Table */}
       <div className="border border-border rounded-sm overflow-hidden bg-white">
         <table className="w-full text-sm text-left">
           <thead className="bg-ivory text-primary uppercase font-medium border-b border-border">
             <tr>
               <th className="px-6 py-4">Product</th>
               <th className="px-6 py-4">Category</th>
-              <th className="px-6 py-4">Price</th>
+              <th className="px-6 py-4">Current Price</th>
+              <th className="px-6 py-4">Compare Price</th>
+              <th className="px-6 py-4">Discount Tag</th>
               <th className="px-6 py-4">Stock</th>
-              <th className="px-6 py-4">Status</th>
               <th className="px-6 py-4 text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
             {products.length === 0 ? (
               <tr>
-                <td colSpan={6} className="text-center py-12 text-muted">
+                <td colSpan={7} className="text-center py-12 text-muted">
                   No products found. Click "Add Product" above to create one.
                 </td>
               </tr>
@@ -56,6 +76,12 @@ export default async function AdminProducts() {
                   firstImage = images.length > 0 ? images[0] : null
                 } catch {
                   firstImage = null
+                }
+
+                let discountBadge = null
+                if (product.comparePrice && product.comparePrice > product.price) {
+                  const pct = Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100)
+                  discountBadge = `${pct}% OFF`
                 }
                 
                 return (
@@ -71,15 +97,26 @@ export default async function AdminProducts() {
                       <span className="font-medium text-primary">{product.name}</span>
                     </td>
                     <td className="px-6 py-4">{product.category.name}</td>
-                    <td className="px-6 py-4 font-medium text-accent">{formatPrice(product.price)}</td>
-                    <td className="px-6 py-4">
-                      <span className={product.stock < 10 ? 'text-error font-medium' : ''}>
-                        {product.stock}
-                      </span>
+                    <td className="px-6 py-4 font-semibold text-accent">{formatPrice(product.price)}</td>
+                    <td className="px-6 py-4 text-muted">
+                      {product.comparePrice ? (
+                        <span className="line-through">{formatPrice(product.comparePrice)}</span>
+                      ) : (
+                        '-'
+                      )}
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`px-2 py-1 rounded-sm text-xs font-medium uppercase ${product.isVisible ? 'bg-success/10 text-success' : 'bg-muted/10 text-muted'}`}>
-                        {product.isVisible ? 'Visible' : 'Hidden'}
+                      {discountBadge ? (
+                        <span className="bg-error text-white text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-xs">
+                          {discountBadge}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-muted font-normal">Regular</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={product.stock <= 8 ? 'text-error font-bold' : ''}>
+                        {product.stock} {product.stock <= 8 && '(Low)'}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
