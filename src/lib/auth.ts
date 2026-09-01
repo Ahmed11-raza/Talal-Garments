@@ -4,6 +4,7 @@ import prisma from "./prisma"
 import bcrypt from "bcrypt"
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  secret: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET || "talal_garments_fallback_secret_key_2026",
   providers: [
     Credentials({
       name: "Credentials",
@@ -14,24 +15,29 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null
         
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email as string }
-        })
-        
-        if (!user) return null
-        
-        const passwordsMatch = await bcrypt.compare(
-          credentials.password as string, 
-          user.password
-        )
-        
-        if (passwordsMatch) {
-          return {
-            id: user.id,
-            email: user.email,
-            name: user.name,
-            role: user.role
+        try {
+          const user = await prisma.user.findUnique({
+            where: { email: credentials.email as string }
+          })
+          
+          if (!user) return null
+          
+          const passwordsMatch = await bcrypt.compare(
+            credentials.password as string, 
+            user.password
+          )
+          
+          if (passwordsMatch) {
+            return {
+              id: user.id,
+              email: user.email,
+              name: user.name,
+              role: user.role
+            }
           }
+        } catch (error) {
+          console.error("Auth Error:", error)
+          return null
         }
         
         return null
@@ -47,7 +53,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return token
     },
     async session({ session, token }) {
-      if (token) {
+      if (token && session.user) {
         session.user.role = token.role as string
         session.user.id = token.id as string
       }
