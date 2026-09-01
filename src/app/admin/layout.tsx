@@ -1,8 +1,21 @@
 import { ReactNode } from 'react'
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
+import { auth } from '@/lib/auth'
 import { LayoutDashboard, Package, ShoppingCart, Users, Settings, LogOut } from 'lucide-react'
 
-export default function AdminLayout({ children }: { children: ReactNode }) {
+export default async function AdminLayout({ children }: { children: ReactNode }) {
+  const session = await auth()
+
+  if (!session) {
+    redirect('/account/login?callbackUrl=/admin')
+  }
+
+  // @ts-ignore
+  if (session.user?.role !== 'admin') {
+    redirect('/')
+  }
+
   return (
     <div className="flex min-h-screen bg-white/30">
       {/* Sidebar */}
