@@ -5,6 +5,7 @@ import { ArrowRight } from 'lucide-react'
 import { ProductCard } from '@/components/storefront/ProductCard'
 import { DealBanner } from '@/components/storefront/DealBanner'
 import { NewsletterForm } from '@/components/storefront/NewsletterForm'
+import { ALL_PRODUCTS_CATALOG } from '@/lib/products-data'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,75 +20,37 @@ export const metadata = {
   },
 }
 
-// Fallback products in case database is unreachable
-const fallbackProducts = [
-  {
-    id: 'f1',
-    name: 'Classic White Shalwar Kameez',
-    slug: 'classic-white-shalwar-kameez',
-    price: 3500,
-    comparePrice: 5000,
-    stock: 4,
-    images: JSON.stringify(['https://images.unsplash.com/photo-1593032465175-481ac7f401a0?w=800&q=80']),
-    category: { name: "Men's Stitched" }
-  },
-  {
-    id: 'f2',
-    name: 'Premium Wash & Wear Suit',
-    slug: 'premium-wash-and-wear-suit',
-    price: 2800,
-    comparePrice: 4000,
-    stock: 12,
-    images: JSON.stringify(['https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w=800&q=80']),
-    category: { name: "Men's Unstitched" }
-  },
-  {
-    id: 'f3',
-    name: 'Chiffon Party Wear Dress',
-    slug: 'chiffon-party-wear-dress',
-    price: 8500,
-    comparePrice: 12000,
-    stock: 3,
-    images: JSON.stringify(['https://images.unsplash.com/photo-1617137968427-85924c800a22?w=800&q=80']),
-    category: { name: "Women's Stitched" }
-  },
-  {
-    id: 'f4',
-    name: 'Authentic Wool Pakol',
-    slug: 'authentic-wool-pakol',
-    price: 1200,
-    comparePrice: 1800,
-    stock: 5,
-    images: JSON.stringify(['https://images.unsplash.com/photo-1542282088-fe8426682b8f?w=800&q=80']),
-    category: { name: 'Caps & Headwear' }
-  }
-]
-
 export default async function StorefrontPage() {
   let featuredProducts: any[] = []
   let newArrivals: any[] = []
 
   try {
-    featuredProducts = await prisma.product.findMany({
+    const dbFeatured = await prisma.product.findMany({
       where: { isFeatured: true, isVisible: true },
       include: { category: true },
       take: 4,
     })
 
-    newArrivals = await prisma.product.findMany({
+    const dbNewArrivals = await prisma.product.findMany({
       where: { isVisible: true },
       include: { category: true },
       orderBy: { createdAt: 'desc' },
-      take: 6,
+      take: 8,
     })
+
+    if (dbFeatured.length > 0) featuredProducts = dbFeatured
+    if (dbNewArrivals.length > 0) newArrivals = dbNewArrivals
   } catch (error) {
-    console.error("DB connection fallback activated:", error)
-    featuredProducts = fallbackProducts
-    newArrivals = fallbackProducts
+    console.error("Storefront DB query fallback activated:", error)
   }
 
-  if (featuredProducts.length === 0) featuredProducts = fallbackProducts
-  if (newArrivals.length === 0) newArrivals = fallbackProducts
+  // If DB is empty, use complete catalog
+  if (featuredProducts.length === 0) {
+    featuredProducts = ALL_PRODUCTS_CATALOG.filter(p => p.isFeatured).slice(0, 4)
+  }
+  if (newArrivals.length === 0) {
+    newArrivals = ALL_PRODUCTS_CATALOG.slice(0, 8)
+  }
 
   return (
     <div className="overflow-x-hidden">
@@ -257,7 +220,7 @@ export default async function StorefrontPage() {
           <div className="flex items-end justify-between mb-8 md:mb-12">
             <div>
               <p className="text-[10px] tracking-[0.25em] uppercase text-accent font-bold mb-2">Handpicked Deals</p>
-              <h2 className="font-serif text-3xl md:text-4xl text-primary">Featured Deals (30% - 40% OFF)</h2>
+              <h2 className="font-serif text-3xl md:text-4xl text-primary">Featured Pieces</h2>
             </div>
             <Link
               href="/collections/all"

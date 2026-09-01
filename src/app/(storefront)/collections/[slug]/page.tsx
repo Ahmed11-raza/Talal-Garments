@@ -2,6 +2,7 @@ import prisma from '@/lib/prisma'
 import { notFound } from 'next/navigation'
 import { ProductCard } from '@/components/storefront/ProductCard'
 import type { Metadata } from 'next'
+import { ALL_PRODUCTS_CATALOG, CATEGORIES_DATA } from '@/lib/products-data'
 
 export const dynamic = 'force-dynamic'
 
@@ -31,53 +32,79 @@ export async function generateMetadata({ params }: CollectionPageProps): Promise
 export default async function CollectionPage({ params }: CollectionPageProps) {
   const { slug } = await params
 
-  let products
-  let title: string
-  let description: string
+  let products: any[] = []
+  let title = 'Collection'
+  let description = 'Browse our collection of premium clothing.'
+
+  const catInfo = CATEGORIES_DATA.find(c => c.slug === slug)
 
   if (slug === 'all') {
-    products = await prisma.product.findMany({
-      where: { isVisible: true },
-      include: { category: true },
-      orderBy: { createdAt: 'desc' },
-    })
     title = 'All Products'
     description = 'Browse our complete collection of premium clothing.'
-  } else {
-    const category = await prisma.category.findUnique({ where: { slug } })
-    if (!category) notFound()
+    try {
+      const dbProducts = await prisma.product.findMany({
+        where: { isVisible: true },
+        include: { category: true },
+        orderBy: { createdAt: 'desc' },
+      })
+      if (dbProducts.length > 0) products = dbProducts
+    } catch (e) {
+      console.error("DB query failed for collection:", e)
+    }
 
-    products = await prisma.product.findMany({
-      where: { categoryId: category.id, isVisible: true },
-      include: { category: true },
-      orderBy: { createdAt: 'desc' },
-    })
-    title = category.name
-    description = categoryMeta[slug]?.description || `Explore our ${category.name.toLowerCase()} collection.`
+    if (products.length === 0) {
+      products = ALL_PRODUCTS_CATALOG
+    }
+  } else {
+    title = catInfo?.name || categoryMeta[slug]?.title || 'Collection'
+    description = categoryMeta[slug]?.description || `Explore our ${title.toLowerCase()} collection.`
+
+    try {
+      const category = await prisma.category.findUnique({ where: { slug } })
+      if (category) {
+        const dbProducts = await prisma.product.findMany({
+          where: { categoryId: category.id, isVisible: true },
+          include: { category: true },
+          orderBy: { createdAt: 'desc' },
+        })
+        if (dbProducts.length > 0) {
+          products = dbProducts
+          title = category.name
+        }
+      }
+    } catch (e) {
+      console.error("DB query failed for category:", e)
+    }
+
+    if (products.length === 0) {
+      products = ALL_PRODUCTS_CATALOG.filter(p => p.category?.slug === slug)
+    }
   }
 
   return (
     <section className="min-h-screen">
       {/* Category Header */}
-      <div className="bg-primary text-white py-16 lg:py-24">
+      <div className="bg-primary text-white py-14 lg:py-20">
         <div className="container mx-auto px-4 text-center">
-          <span className="text-accent text-xs tracking-[0.2em] uppercase font-bold mb-4 block">Collection</span>
-          <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl mb-4">{title}</h1>
-          <p className="text-white/60 max-w-lg mx-auto">{description}</p>
+          <span className="text-accent text-xs tracking-[0.2em] uppercase font-bold mb-3 block">Collection</span>
+          <h1 className="font-serif text-3xl md:text-5xl lg:text-6xl mb-3">{title}</h1>
+          <p className="text-white/60 max-w-lg mx-auto text-sm md:text-base">{description}</p>
         </div>
       </div>
 
       {/* Product Grid */}
-      <div className="container mx-auto px-4 py-16">
+      <div className="container mx-auto px-4 py-14">
         {products.length === 0 ? (
           <div className="text-center py-24 space-y-4">
-            <p className="font-serif text-2xl text-primary">No products yet</p>
+            <p className="font-serif text-2xl text-primary">No products found</p>
             <p className="text-muted">Check back soon — new items are added regularly.</p>
           </div>
         ) : (
           <>
-            <p className="text-sm text-muted mb-8">{products.length} product{products.length !== 1 ? 's' : ''}</p>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-12">
+            <p className="text-xs uppercase tracking-wider text-muted font-medium mb-8">
+              Showing {products.length} product{products.length !== 1 ? 's' : ''}
+            </p>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-8 md:gap-x-6 md:gap-y-12">
               {products.map(product => (
                 <ProductCard key={product.id} product={product} />
               ))}
