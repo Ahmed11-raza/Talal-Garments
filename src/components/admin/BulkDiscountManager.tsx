@@ -4,60 +4,69 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Percent, Tag, Zap, RotateCcw, Loader2, Sparkles, Flame, Database } from 'lucide-react'
+import { Label } from '@/components/ui/label'
+import { Percent, Tag, Zap, RotateCcw, Loader2, Sparkles, ShoppingBag, Layers, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { formatPrice } from '@/lib/format'
 
 interface BulkDiscountManagerProps {
   categories: { id: string; name: string }[]
+  products?: { id: string; name: string; price: number; comparePrice?: number | null; categoryId?: string }[]
 }
 
-export function BulkDiscountManager({ categories }: BulkDiscountManagerProps) {
+export function BulkDiscountManager({ categories, products = [] }: BulkDiscountManagerProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
-  const [seeding, setSeeding] = useState(false)
-  const [selectedCategory, setSelectedCategory] = useState('all')
+  
+  // Controls
+  const [scopeType, setScopeType] = useState<'store' | 'category' | 'product'>('store')
+  const [selectedCategoryId, setSelectedCategoryId] = useState(categories[0]?.id || '')
+  const [selectedProductId, setSelectedProductId] = useState(products[0]?.id || '')
+  const [campaignName, setCampaignName] = useState('')
   const [discountType, setDiscountType] = useState<'percentage' | 'flat'>('percentage')
-  const [value, setValue] = useState('30')
+  const [discountValue, setDiscountValue] = useState('20')
 
-  // One-click preset campaign handler
-  const handlePresetCampaign = async (name: string, cat: string, type: 'percentage' | 'flat', val: string) => {
-    if (!confirm(`Launch "${name}" (${type === 'percentage' ? val + '% OFF' : 'Flat Rs. ' + val + ' OFF'})?`)) return
-    
-    setLoading(true)
-    try {
-      const res = await fetch('/api/products/discount', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          categoryId: cat,
-          discountType: type,
-          value: val,
-          action: 'apply'
-        })
-      })
+  // Selected product object for live preview
+  const activeProduct = products.find(p => p.id === selectedProductId)
+  const previewOriginalPrice = activeProduct 
+    ? (activeProduct.comparePrice || activeProduct.price) 
+    : 4000
 
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error)
-
-      toast.success(`🎉 ${name} Activated! ${data.message}`)
-      router.refresh()
-    } catch (error: any) {
-      toast.error(error.message || 'Campaign activation failed')
-    } finally {
-      setLoading(false)
-    }
+  const numVal = parseFloat(discountValue) || 0
+  let previewDiscountedPrice = previewOriginalPrice
+  if (discountType === 'percentage') {
+    previewDiscountedPrice = Math.max(100, Math.round(previewOriginalPrice * (1 - numVal / 100)))
+  } else {
+    previewDiscountedPrice = Math.max(100, Math.round(previewOriginalPrice - numVal))
   }
+  const previewSavings = previewOriginalPrice - previewDiscountedPrice
+  const previewPercent = Math.round((previewSavings / previewOriginalPrice) * 100)
 
   const handleApplyDiscount = async (action: 'apply' | 'remove') => {
-    const categoryName = selectedCategory === 'all' 
-      ? 'Entire Store' 
-      : categories.find(c => c.id === selectedCategory)?.name || 'Category'
+    let targetType: 'all' | 'category' | 'product' = 'all'
+    let targetId = 'all'
+    let targetLabel = 'Entire Store'
+
+    if (scopeType === 'category') {
+      targetType = 'category'
+      targetId = selectedCategoryId
+      targetLabel = categories.find(c => c.id === selectedCategoryId)?.name || 'Selected Category'
+    } else if (scopeType === 'product') {
+      targetType = 'product'
+      targetId = selectedProductId
+      targetLabel = products.find(p => p.id === selectedProductId)?.name || 'Selected Product'
+    }
 
     if (action === 'apply') {
-      const confirmMsg = `Apply ${discountType === 'percentage' ? value + '% OFF' : 'Flat Rs. ' + value + ' OFF'} to ${categoryName}?`
+      if (!discountValue || numVal <= 0) {
+        toast.error('Please enter a valid discount value greater than 0')
+        return
+      }
+      const desc = discountType === 'percentage' ? `${discountValue}% OFF` : `Flat Rs. ${discountValue} OFF`
+      const confirmMsg = `Apply ${desc} ${campaignName ? `("${campaignName}") ` : ''}to ${targetLabel}?`
       if (!confirm(confirmMsg)) return
     } else {
-      if (!confirm(`Reset and remove all discounts from ${categoryName}?`)) return
+      if (!confirm(`Reset and remove all discounts from ${targetLabel}?`)) return
     }
 
     setLoading(true)
@@ -67,9 +76,11 @@ export function BulkDiscountManager({ categories }: BulkDiscountManagerProps) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          categoryId: selectedCategory,
+          targetType,
+          targetId,
           discountType,
-          value,
+          value: discountValue,
+          campaignName: campaignName.trim(),
           action
         })
       })
@@ -86,209 +97,230 @@ export function BulkDiscountManager({ categories }: BulkDiscountManagerProps) {
     }
   }
 
-  // Restore/populate full catalog of 20 products
-  const handlePopulateDatabase = async () => {
-    if (!confirm('Populate/Restore all 20 demo products across all 6 categories into database?')) return
-    
-    setSeeding(true)
-    try {
-      const res = await fetch('/api/admin/seed', { method: 'POST' })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error)
-
-      toast.success(data.message)
-      router.refresh()
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to populate database')
-    } finally {
-      setSeeding(false)
-    }
-  }
-
   return (
-    <div className="space-y-6">
-      
-      {/* 1. Quick Festive & Event Campaigns */}
-      <div className="bg-white p-6 rounded-sm border border-border shadow-sm space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-3">
-          <div className="flex items-center gap-2">
-            <Flame className="w-5 h-5 text-accent" />
-            <h3 className="font-serif text-lg font-bold text-primary">Quick Event & Festive Sales</h3>
+    <div className="bg-white border border-border rounded-sm shadow-sm overflow-hidden">
+      {/* Header */}
+      <div className="bg-primary text-white p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <div className="p-2 bg-accent rounded-sm text-white">
+            <Zap className="w-5 h-5" />
           </div>
-          <span className="text-xs text-muted">1-Click Storewide Promotions</span>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-          <button
-            type="button"
-            disabled={loading}
-            onClick={() => handlePresetCampaign('🇵🇰 Azadi Sale (Flat 40% OFF)', 'all', 'percentage', '40')}
-            className="p-3 bg-ivory hover:bg-accent/15 border border-border hover:border-accent rounded-sm text-left transition-all group"
-          >
-            <span className="text-base block mb-1">🇵🇰</span>
-            <span className="text-xs font-bold text-primary block group-hover:text-accent">Azadi Sale</span>
-            <span className="text-[11px] font-semibold text-error">Flat 40% OFF</span>
-          </button>
-
-          <button
-            type="button"
-            disabled={loading}
-            onClick={() => handlePresetCampaign('❄️ Winter Collection Sale (30% OFF)', 'all', 'percentage', '30')}
-            className="p-3 bg-ivory hover:bg-accent/15 border border-border hover:border-accent rounded-sm text-left transition-all group"
-          >
-            <span className="text-base block mb-1">❄️</span>
-            <span className="text-xs font-bold text-primary block group-hover:text-accent">Winter Sale</span>
-            <span className="text-[11px] font-semibold text-accent">30% OFF Store</span>
-          </button>
-
-          <button
-            type="button"
-            disabled={loading}
-            onClick={() => handlePresetCampaign('🌙 Eid Festive Sale (25% OFF)', 'all', 'percentage', '25')}
-            className="p-3 bg-ivory hover:bg-accent/15 border border-border hover:border-accent rounded-sm text-left transition-all group"
-          >
-            <span className="text-base block mb-1">🌙</span>
-            <span className="text-xs font-bold text-primary block group-hover:text-accent">Eid Festive</span>
-            <span className="text-[11px] font-semibold text-primary">25% OFF All</span>
-          </button>
-
-          <button
-            type="button"
-            disabled={loading}
-            onClick={() => handlePresetCampaign('🏷️ Flat Rs. 500 OFF', 'all', 'flat', '500')}
-            className="p-3 bg-ivory hover:bg-accent/15 border border-border hover:border-accent rounded-sm text-left transition-all group"
-          >
-            <span className="text-base block mb-1">🏷️</span>
-            <span className="text-xs font-bold text-primary block group-hover:text-accent">Flat Cash OFF</span>
-            <span className="text-[11px] font-semibold text-success">Rs. 500 OFF</span>
-          </button>
-
-          <button
-            type="button"
-            disabled={loading}
-            onClick={() => handleApplyDiscount('remove')}
-            className="p-3 bg-ivory hover:bg-error/10 border border-border hover:border-error rounded-sm text-left transition-all group"
-          >
-            <span className="text-base block mb-1">🔄</span>
-            <span className="text-xs font-bold text-primary block group-hover:text-error">Reset Prices</span>
-            <span className="text-[11px] text-muted">Clear Discounts</span>
-          </button>
+          <div>
+            <h2 className="font-serif text-lg font-bold">Discounts & Promotions Control Center</h2>
+            <p className="text-xs text-white/70">Create custom sales, apply discounts to single items, categories, or storewide with custom percentages and names.</p>
+          </div>
         </div>
       </div>
 
-      {/* 2. Custom Category & Flat Discount Controller */}
-      <div className="bg-gradient-to-r from-primary via-stone-900 to-primary text-white p-6 rounded-sm shadow-md border border-white/10 space-y-4">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-white/10 pb-4">
-          <div className="flex items-center gap-2">
-            <div className="p-2 bg-accent/20 rounded-full text-accent">
-              <Zap className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="font-serif text-xl font-bold">Custom Category & Flat Discount Controller</h3>
-              <p className="text-xs text-white/70">Apply custom % or flat amount discount to any specific category or storewide.</p>
-            </div>
-          </div>
+      <div className="p-6 space-y-6">
+        
+        {/* Step 1: Target Scope Selection */}
+        <div className="space-y-3">
+          <Label className="text-xs uppercase tracking-wider font-semibold text-primary block">
+            1. Where do you want to apply the discount?
+          </Label>
           
-          <div className="flex items-center gap-2">
-            <Button
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <button
               type="button"
-              size="sm"
-              onClick={handlePopulateDatabase}
-              disabled={seeding}
-              variant="outline"
-              className="border-accent text-accent hover:bg-accent hover:text-white text-xs font-semibold"
+              onClick={() => setScopeType('product')}
+              className={`p-4 border rounded-sm text-left transition-all flex items-start gap-3 ${
+                scopeType === 'product'
+                  ? 'border-accent bg-accent/5 ring-1 ring-accent'
+                  : 'border-border hover:bg-ivory'
+              }`}
             >
-              {seeding ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <Database className="w-3.5 h-3.5 mr-1" />}
-              Restore All 20 Products
-            </Button>
+              <ShoppingBag className={`w-5 h-5 shrink-0 mt-0.5 ${scopeType === 'product' ? 'text-accent' : 'text-muted'}`} />
+              <div>
+                <span className="font-semibold text-sm text-primary block">Specific Single Item</span>
+                <span className="text-xs text-muted">Apply discount to one chosen product</span>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setScopeType('category')}
+              className={`p-4 border rounded-sm text-left transition-all flex items-start gap-3 ${
+                scopeType === 'category'
+                  ? 'border-accent bg-accent/5 ring-1 ring-accent'
+                  : 'border-border hover:bg-ivory'
+              }`}
+            >
+              <Layers className={`w-5 h-5 shrink-0 mt-0.5 ${scopeType === 'category' ? 'text-accent' : 'text-muted'}`} />
+              <div>
+                <span className="font-semibold text-sm text-primary block">Entire Category</span>
+                <span className="text-xs text-muted">e.g. All Men's Stitched, Caps, etc.</span>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setScopeType('store')}
+              className={`p-4 border rounded-sm text-left transition-all flex items-start gap-3 ${
+                scopeType === 'store'
+                  ? 'border-accent bg-accent/5 ring-1 ring-accent'
+                  : 'border-border hover:bg-ivory'
+              }`}
+            >
+              <Sparkles className={`w-5 h-5 shrink-0 mt-0.5 ${scopeType === 'store' ? 'text-accent' : 'text-muted'}`} />
+              <div>
+                <span className="font-semibold text-sm text-primary block">Entire Store</span>
+                <span className="text-xs text-muted">Storewide flat or % discount</span>
+              </div>
+            </button>
           </div>
+
+          {/* Conditional Dropdown for Product or Category */}
+          {scopeType === 'product' && (
+            <div className="pt-2">
+              <Label htmlFor="product-select" className="text-xs font-medium text-primary mb-1.5 block">
+                Select the Product:
+              </Label>
+              <select
+                id="product-select"
+                value={selectedProductId}
+                onChange={e => setSelectedProductId(e.target.value)}
+                className="w-full h-11 border border-border rounded-sm px-3 text-sm bg-white focus:outline-none focus:border-accent"
+              >
+                {products.map(p => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} — Current Price: {formatPrice(p.price)} {p.comparePrice ? `(Original: ${formatPrice(p.comparePrice)})` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {scopeType === 'category' && (
+            <div className="pt-2">
+              <Label htmlFor="category-select" className="text-xs font-medium text-primary mb-1.5 block">
+                Select the Category:
+              </Label>
+              <select
+                id="category-select"
+                value={selectedCategoryId}
+                onChange={e => setSelectedCategoryId(e.target.value)}
+                className="w-full h-11 border border-border rounded-sm px-3 text-sm bg-white focus:outline-none focus:border-accent"
+              >
+                {categories.map(c => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-end pt-2">
-          {/* Category Scope */}
-          <div className="space-y-1.5">
-            <label className="text-xs uppercase font-semibold tracking-wider text-white/80">Target Scope</label>
-            <select
-              className="w-full h-11 bg-white/10 border border-white/20 rounded-sm px-3 text-xs text-white focus:outline-none focus:border-accent"
-              value={selectedCategory}
-              onChange={e => setSelectedCategory(e.target.value)}
-            >
-              <option value="all" className="bg-primary text-white">Entire Store (All Categories)</option>
-              {categories.map(cat => (
-                <option key={cat.id} value={cat.id} className="bg-primary text-white">
-                  {cat.name}
-                </option>
-              ))}
-            </select>
-          </div>
+        {/* Step 2: Discount Configuration & Custom Details */}
+        <div className="pt-4 border-t border-border space-y-4">
+          <Label className="text-xs uppercase tracking-wider font-semibold text-primary block">
+            2. Configure Discount Name, Type & Percentage / Amount
+          </Label>
 
-          {/* Discount Type */}
-          <div className="space-y-1.5">
-            <label className="text-xs uppercase font-semibold tracking-wider text-white/80">Discount Type</label>
-            <div className="grid grid-cols-2 gap-1 bg-white/10 p-1 rounded-sm border border-white/20 h-11 items-center">
-              <button
-                type="button"
-                onClick={() => { setDiscountType('percentage'); setValue('30') }}
-                className={`h-full text-xs font-semibold uppercase tracking-wider rounded-xs flex items-center justify-center gap-1 transition-colors ${
-                  discountType === 'percentage' ? 'bg-accent text-white' : 'text-white/70 hover:text-white'
-                }`}
-              >
-                <Percent className="w-3.5 h-3.5" /> % OFF
-              </button>
-              <button
-                type="button"
-                onClick={() => { setDiscountType('flat'); setValue('500') }}
-                className={`h-full text-xs font-semibold uppercase tracking-wider rounded-xs flex items-center justify-center gap-1 transition-colors ${
-                  discountType === 'flat' ? 'bg-accent text-white' : 'text-white/70 hover:text-white'
-                }`}
-              >
-                <Tag className="w-3.5 h-3.5" /> Flat Rs.
-              </button>
-            </div>
-          </div>
-
-          {/* Discount Value */}
-          <div className="space-y-1.5">
-            <label className="text-xs uppercase font-semibold tracking-wider text-white/80">
-              {discountType === 'percentage' ? 'Percentage (% OFF)' : 'Flat Amount (Rs. OFF)'}
-            </label>
-            <div className="relative">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            
+            {/* Custom Promotion / Sale Name */}
+            <div className="space-y-1.5">
+              <Label htmlFor="campaign-name" className="text-xs text-muted">
+                Sale / Campaign Name (Optional)
+              </Label>
               <Input
-                type="number"
-                value={value}
-                onChange={e => setValue(e.target.value)}
-                placeholder={discountType === 'percentage' ? 'e.g. 30' : 'e.g. 500'}
-                className="h-11 bg-white/10 border-white/20 text-white placeholder:text-white/40 text-xs rounded-sm pr-12"
+                id="campaign-name"
+                placeholder="e.g. Azadi Sale, Winter Special, Flash Deal"
+                value={campaignName}
+                onChange={e => setCampaignName(e.target.value)}
+                className="h-11 text-xs"
               />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-accent">
-                {discountType === 'percentage' ? '%' : 'PKR'}
+            </div>
+
+            {/* Discount Type Toggle */}
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted">Discount Type</Label>
+              <div className="grid grid-cols-2 gap-1 bg-ivory p-1 rounded-sm border border-border h-11 items-center">
+                <button
+                  type="button"
+                  onClick={() => { setDiscountType('percentage'); setDiscountValue('25') }}
+                  className={`h-full text-xs font-semibold uppercase tracking-wider rounded-xs flex items-center justify-center gap-1 transition-colors ${
+                    discountType === 'percentage' ? 'bg-accent text-white shadow-xs' : 'text-primary hover:bg-white/60'
+                  }`}
+                >
+                  <Percent className="w-3.5 h-3.5" /> % OFF
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setDiscountType('flat'); setDiscountValue('500') }}
+                  className={`h-full text-xs font-semibold uppercase tracking-wider rounded-xs flex items-center justify-center gap-1 transition-colors ${
+                    discountType === 'flat' ? 'bg-accent text-white shadow-xs' : 'text-primary hover:bg-white/60'
+                  }`}
+                >
+                  <Tag className="w-3.5 h-3.5" /> Flat Rs.
+                </button>
+              </div>
+            </div>
+
+            {/* Discount Value (Percentage or Flat Amount) */}
+            <div className="space-y-1.5">
+              <Label htmlFor="discount-val" className="text-xs text-muted">
+                {discountType === 'percentage' ? 'Enter Percentage (% OFF)' : 'Enter Flat Discount (Rs. OFF)'}
+              </Label>
+              <div className="relative">
+                <Input
+                  id="discount-val"
+                  type="number"
+                  placeholder={discountType === 'percentage' ? 'e.g. 15, 25, 30, 40' : 'e.g. 500, 1000'}
+                  value={discountValue}
+                  onChange={e => setDiscountValue(e.target.value)}
+                  className="h-11 pr-12 text-sm font-semibold"
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-accent">
+                  {discountType === 'percentage' ? '%' : 'PKR'}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Live Calculation Preview Card */}
+        <div className="bg-ivory/80 border border-border/80 p-4 rounded-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <CheckCircle2 className="w-5 h-5 text-accent shrink-0" />
+            <div>
+              <span className="text-xs font-semibold text-primary block">
+                Live Price Calculation Preview:
               </span>
+              <p className="text-xs text-muted">
+                Original Price: <span className="line-through">{formatPrice(previewOriginalPrice)}</span> ➔{' '}
+                <strong className="text-accent text-sm font-bold">{formatPrice(previewDiscountedPrice)}</strong>
+                {' '}(Customer Saves: {formatPrice(previewSavings)} / {previewPercent}% OFF)
+              </p>
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             <Button
               type="button"
-              onClick={() => handleApplyDiscount('apply')}
               disabled={loading}
-              className="flex-1 h-11 bg-accent hover:bg-accent-light text-white text-xs font-semibold uppercase tracking-wider rounded-sm shadow-sm"
+              onClick={() => handleApplyDiscount('apply')}
+              className="flex-1 sm:flex-none h-11 bg-accent hover:bg-accent-light text-white text-xs font-semibold uppercase tracking-wider px-6 rounded-sm shadow-sm"
             >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Apply Discount'}
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Apply Discount Now'}
             </Button>
 
             <Button
               type="button"
-              onClick={() => handleApplyDiscount('remove')}
               disabled={loading}
+              onClick={() => handleApplyDiscount('remove')}
               variant="outline"
-              className="h-11 border-white/20 text-white hover:bg-white/10 rounded-sm px-3"
-              title="Reset/Remove Discounts from Selected Scope"
+              className="h-11 border-border hover:bg-error/10 hover:text-error hover:border-error text-xs px-3 rounded-sm"
+              title="Reset and remove discounts from selected target"
             >
-              <RotateCcw className="w-4 h-4" />
+              <RotateCcw className="w-4 h-4 mr-1.5" />
+              Reset
             </Button>
           </div>
         </div>
+
       </div>
     </div>
   )

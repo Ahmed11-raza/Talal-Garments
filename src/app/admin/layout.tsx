@@ -39,7 +39,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
           </Link>
           <Link href="/admin/products" className="flex items-center space-x-3 px-4 py-3 rounded-sm hover:bg-white/10 transition-colors">
             <Package className="w-5 h-5 text-accent" />
-            <span className="font-medium text-sm">Products</span>
+            <span className="font-medium text-sm">Products & Discounts</span>
           </Link>
           <Link href="/admin/orders" className="flex items-center space-x-3 px-4 py-3 rounded-sm hover:bg-white/10 transition-colors">
             <ShoppingCart className="w-5 h-5 text-accent" />

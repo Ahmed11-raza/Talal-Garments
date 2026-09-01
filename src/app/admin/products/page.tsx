@@ -51,8 +51,8 @@ export default async function AdminProducts() {
         </Button>
       </div>
 
-      {/* Bulk Category, Festive & Flat Discount Manager */}
-      <BulkDiscountManager categories={categories} />
+      {/* Bulk & Single Item, Category, Flat Discount Manager */}
+      <BulkDiscountManager categories={categories} products={products} />
 
       {/* Products Inventory Table */}
       <div className="border border-border rounded-sm overflow-hidden bg-white shadow-sm">

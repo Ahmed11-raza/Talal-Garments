@@ -6,9 +6,10 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { X, Upload, Link as LinkIcon } from 'lucide-react'
+import { X, Upload, Link as LinkIcon, Percent, Tag, Calculator } from 'lucide-react'
 import { toast } from 'sonner'
 import Image from 'next/image'
+import { formatPrice } from '@/lib/format'
 
 interface ProductFormProps {
   initialData?: any
@@ -57,6 +58,55 @@ export function ProductForm({ initialData, categories }: ProductFormProps) {
   const [newColorName, setNewColorName] = useState('')
   const [newColorHex, setNewColorHex] = useState('#000000')
 
+  // Interactive single-product discount helper state
+  const [quickDiscountType, setQuickDiscountType] = useState<'percent' | 'flat'>('percent')
+  const [quickDiscountVal, setQuickDiscountVal] = useState('')
+
+  const handleApplyQuickDiscount = () => {
+    const val = parseFloat(quickDiscountVal)
+    if (isNaN(val) || val <= 0) {
+      toast.error('Please enter a valid discount value')
+      return
+    }
+
+    // Base price is comparePrice if set, otherwise current price
+    const base = parseFloat(formData.comparePrice) || parseFloat(formData.price) || 0
+    if (base <= 0) {
+      toast.error('Please enter a base price first')
+      return
+    }
+
+    let discountedPrice = base
+    if (quickDiscountType === 'percent') {
+      if (val >= 100) {
+        toast.error('Discount percentage must be less than 100%')
+        return
+      }
+      discountedPrice = Math.round(base * (1 - val / 100))
+    } else {
+      discountedPrice = Math.max(100, Math.round(base - val))
+    }
+
+    setFormData({
+      ...formData,
+      comparePrice: String(base),
+      price: String(discountedPrice)
+    })
+
+    toast.success(`Discount calculated! Sale Price: Rs. ${discountedPrice}, Original Price: Rs. ${base}`)
+  }
+
+  const handleClearDiscount = () => {
+    const original = formData.comparePrice || formData.price
+    setFormData({
+      ...formData,
+      price: String(original),
+      comparePrice: ''
+    })
+    setQuickDiscountVal('')
+    toast.success('Discount cleared. Restored regular price.')
+  }
+
   const handleAddImageUrl = () => {
     if (!imageUrl.trim()) return
     setImages([...images, imageUrl.trim()])
@@ -69,13 +119,13 @@ export function ProductForm({ initialData, categories }: ProductFormProps) {
     if (!file) return
 
     setUploading(true)
-    const formData = new FormData()
-    formData.append('file', file)
+    const formDataUpload = new FormData()
+    formDataUpload.append('file', file)
 
     try {
       const res = await fetch('/api/upload', {
         method: 'POST',
-        body: formData
+        body: formDataUpload
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
@@ -165,14 +215,93 @@ export function ProductForm({ initialData, categories }: ProductFormProps) {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="price">Price (PKR)</Label>
-              <Input type="number" id="price" value={formData.price} onChange={e => setFormData({ ...formData, price: e.target.value })} required />
+          {/* Pricing & Interactive Discount Calculator */}
+          <div className="bg-ivory/60 border border-border p-4 rounded-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Calculator className="w-4 h-4 text-accent" />
+                <h4 className="text-xs uppercase font-bold tracking-wider text-primary">Pricing & Item Discount</h4>
+              </div>
+              {formData.comparePrice && (
+                <button
+                  type="button"
+                  onClick={handleClearDiscount}
+                  className="text-xs text-error hover:underline"
+                >
+                  Clear Discount
+                </button>
+              )}
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="comparePrice">Compare at Price (optional)</Label>
-              <Input type="number" id="comparePrice" value={formData.comparePrice} onChange={e => setFormData({ ...formData, comparePrice: e.target.value })} />
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="price" className="text-xs">
+                  Selling Price (PKR) <span className="text-accent font-bold">*</span>
+                </Label>
+                <Input 
+                  type="number" 
+                  id="price" 
+                  value={formData.price} 
+                  onChange={e => setFormData({ ...formData, price: e.target.value })} 
+                  placeholder="e.g. 3500"
+                  required 
+                />
+                <span className="text-[11px] text-muted block">The actual price the customer pays.</span>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="comparePrice" className="text-xs">
+                  Original / Compare at Price (Optional)
+                </Label>
+                <Input 
+                  type="number" 
+                  id="comparePrice" 
+                  value={formData.comparePrice} 
+                  onChange={e => setFormData({ ...formData, comparePrice: e.target.value })} 
+                  placeholder="e.g. 5000"
+                />
+                <span className="text-[11px] text-muted block">Crossed-out original price to show savings.</span>
+              </div>
+            </div>
+
+            {/* Quick Single-Item Discount Calculator Tool */}
+            <div className="bg-white p-3 rounded-sm border border-border/80 space-y-2">
+              <span className="text-[11px] font-semibold text-primary block">
+                Quick Calculate Discount for this item:
+              </span>
+              <div className="flex gap-2 items-center">
+                <select
+                  value={quickDiscountType}
+                  onChange={e => setQuickDiscountType(e.target.value as any)}
+                  className="h-9 text-xs border border-border rounded-sm px-2 bg-ivory"
+                >
+                  <option value="percent">% Discount</option>
+                  <option value="flat">Flat Rs. OFF</option>
+                </select>
+
+                <Input
+                  type="number"
+                  placeholder={quickDiscountType === 'percent' ? 'e.g. 25 for 25% OFF' : 'e.g. 500'}
+                  value={quickDiscountVal}
+                  onChange={e => setQuickDiscountVal(e.target.value)}
+                  className="h-9 text-xs flex-1"
+                />
+
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={handleApplyQuickDiscount}
+                  className="bg-primary hover:bg-accent text-white text-xs h-9"
+                >
+                  Apply to Item
+                </Button>
+              </div>
+
+              {formData.comparePrice && parseFloat(formData.comparePrice) > parseFloat(formData.price) && (
+                <p className="text-[11px] text-success font-medium pt-1">
+                  ✓ Active Discount: Customer saves {formatPrice(parseFloat(formData.comparePrice) - parseFloat(formData.price))} ({Math.round(((parseFloat(formData.comparePrice) - parseFloat(formData.price)) / parseFloat(formData.comparePrice)) * 100)}% OFF badge on store).
+                </p>
+              )}
             </div>
           </div>
           
