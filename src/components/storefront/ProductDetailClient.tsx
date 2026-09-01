@@ -6,7 +6,7 @@ import { formatPrice } from '@/lib/format'
 import { useCartStore } from '@/lib/cart'
 import { useWishlistStore } from '@/lib/wishlist'
 import { Button } from '@/components/ui/button'
-import { Heart, Check, ChevronDown, ChevronUp, Share2 } from 'lucide-react'
+import { Heart, ChevronDown, ChevronUp, Share2, Flame, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import JsonLd from '@/components/seo/JsonLd'
 import { ProductCard } from './ProductCard'
@@ -15,9 +15,9 @@ export function ProductDetailClient({ product, relatedProducts }: { product: any
   const [selectedImage, setSelectedImage] = useState(0)
   
   // Safe parsing for SQLite JSON strings
-  const images = typeof product.images === 'string' ? JSON.parse(product.images) : product.images
-  const sizes = typeof product.sizes === 'string' ? JSON.parse(product.sizes) : product.sizes
-  const colors = typeof product.colors === 'string' ? JSON.parse(product.colors) : product.colors
+  const images = typeof product.images === 'string' ? JSON.parse(product.images) : (product.images || [])
+  const sizes = typeof product.sizes === 'string' ? JSON.parse(product.sizes) : (product.sizes || ['Standard'])
+  const colors = typeof product.colors === 'string' ? JSON.parse(product.colors) : (product.colors || [{ name: 'Default', hex: '#000000' }])
   
   const [selectedSize, setSelectedSize] = useState(sizes[0] || '')
   const [selectedColor, setSelectedColor] = useState(colors[0]?.name || '')
@@ -34,7 +34,7 @@ export function ProductDetailClient({ product, relatedProducts }: { product: any
       productId: product.id,
       name: product.name,
       price: product.price,
-      image: images[0] || '/placeholder.png',
+      image: images[0] || 'https://images.unsplash.com/photo-1593032465175-481ac7f401a0?w=800&q=80',
       color: selectedColor,
       size: selectedSize,
       maxStock: product.stock,
@@ -51,12 +51,20 @@ export function ProductDetailClient({ product, relatedProducts }: { product: any
         productId: product.id,
         name: product.name,
         price: product.price,
-        image: images[0] || '/placeholder.png',
+        image: images[0] || 'https://images.unsplash.com/photo-1593032465175-481ac7f401a0?w=800&q=80',
         slug: product.slug,
       })
       toast.success('Added to wishlist')
     }
   }
+
+  // Calculate discount percentage
+  let discountPercent = 0
+  if (product.comparePrice && product.comparePrice > product.price) {
+    discountPercent = Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100)
+  }
+
+  const isLowStock = product.stock !== undefined && product.stock > 0 && product.stock <= 8
 
   const jsonLdData = {
     "@context": "https://schema.org/",
@@ -105,56 +113,74 @@ export function ProductDetailClient({ product, relatedProducts }: { product: any
             {/* Main Image */}
             <div className="relative aspect-[3/4] flex-1 overflow-hidden bg-ivory rounded-sm">
               <Image 
-                src={images[selectedImage] || '/placeholder.png'} 
+                src={images[selectedImage] || 'https://images.unsplash.com/photo-1593032465175-481ac7f401a0?w=800&q=80'} 
                 alt={product.name} 
                 fill 
                 priority
                 sizes="(max-width: 768px) 100vw, 50vw"
                 className="object-cover object-center transition-opacity duration-300"
               />
-              {product.comparePrice && product.comparePrice > product.price && (
-                <div className="absolute top-4 left-4 bg-accent text-white text-xs uppercase tracking-wider px-3 py-1.5 font-medium z-10">
-                  Sale
+              {discountPercent > 0 && (
+                <div className="absolute top-4 left-4 bg-error text-white text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-xs shadow-md z-10">
+                  {discountPercent}% OFF
                 </div>
               )}
             </div>
           </div>
 
           {/* Right Column: Product Info */}
-          <div className="w-full lg:w-1/2 max-w-lg lg:pt-8">
-            <div className="mb-2">
+          <div className="w-full lg:w-1/2 max-w-lg lg:pt-4">
+            <div className="mb-2 flex items-center justify-between">
               <span className="text-xs tracking-[0.2em] uppercase text-muted font-bold">
                 {product.category?.name || 'Talal Garments'}
               </span>
+              {discountPercent > 0 && (
+                <span className="text-xs font-bold uppercase text-error tracking-wider flex items-center gap-1">
+                  <Flame className="w-3.5 h-3.5" /> Limited Time Deal
+                </span>
+              )}
             </div>
             
-            <h1 className="font-serif text-4xl lg:text-5xl text-primary mb-4">{product.name}</h1>
+            <h1 className="font-serif text-3xl lg:text-4xl text-primary mb-4">{product.name}</h1>
             
-            <div className="flex items-center gap-3 mb-8">
-              <span className="text-2xl font-medium text-accent">{formatPrice(product.price)}</span>
+            <div className="flex items-center gap-4 mb-6">
+              <span className="text-3xl font-serif font-bold text-accent">{formatPrice(product.price)}</span>
               {product.comparePrice && product.comparePrice > product.price && (
-                <span className="text-muted line-through text-lg">{formatPrice(product.comparePrice)}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-muted line-through text-lg">{formatPrice(product.comparePrice)}</span>
+                  <span className="bg-error/10 text-error text-xs font-bold px-2 py-0.5 rounded">
+                    Save {formatPrice(product.comparePrice - product.price)}
+                  </span>
+                </div>
               )}
             </div>
 
+            {/* Low Stock Alert Banner */}
+            {isLowStock && (
+              <div className="mb-6 bg-accent/10 border border-accent/30 text-primary p-3 rounded-sm flex items-center gap-3 text-xs font-medium">
+                <AlertCircle className="w-4 h-4 text-accent shrink-0" />
+                <span>Hurry! Only <strong>{product.stock} items remaining</strong> in stock for nationwide delivery.</span>
+              </div>
+            )}
+
             {/* Colors */}
             {colors && colors.length > 0 && (
-              <div className="mb-8">
-                <div className="flex justify-between items-center mb-3">
-                  <span className="text-sm uppercase tracking-wider font-medium text-primary">Color: <span className="text-muted">{selectedColor}</span></span>
+              <div className="mb-6">
+                <div className="flex justify-between items-center mb-2.5">
+                  <span className="text-xs uppercase tracking-wider font-bold text-primary">Color: <span className="text-muted font-normal">{selectedColor}</span></span>
                 </div>
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-wrap gap-2.5">
                   {colors.map((c: any) => (
                     <button
                       key={c.name}
                       onClick={() => setSelectedColor(c.name)}
-                      className={`w-10 h-10 rounded-full border-2 transition-all flex items-center justify-center ${
+                      className={`w-9 h-9 rounded-full border-2 transition-all flex items-center justify-center ${
                         selectedColor === c.name ? 'border-primary' : 'border-transparent hover:border-border'
                       }`}
                       title={c.name}
                     >
                       <span 
-                        className="w-8 h-8 rounded-full border border-border" 
+                        className="w-7 h-7 rounded-full border border-border" 
                         style={{ backgroundColor: c.hex || '#ccc' }} 
                       />
                     </button>
@@ -165,19 +191,19 @@ export function ProductDetailClient({ product, relatedProducts }: { product: any
 
             {/* Sizes */}
             {sizes && sizes.length > 0 && (
-              <div className="mb-10">
-                <div className="flex justify-between items-center mb-3">
-                  <span className="text-sm uppercase tracking-wider font-medium text-primary">Size</span>
+              <div className="mb-8">
+                <div className="flex justify-between items-center mb-2.5">
+                  <span className="text-xs uppercase tracking-wider font-bold text-primary">Size</span>
                   <button className="text-xs text-muted underline underline-offset-4 hover:text-primary transition-colors">
                     Size Guide
                   </button>
                 </div>
-                <div className="grid grid-cols-4 gap-3">
+                <div className="grid grid-cols-4 gap-2.5">
                   {sizes.map((s: string) => (
                     <button
                       key={s}
                       onClick={() => setSelectedSize(s)}
-                      className={`h-12 border rounded-sm flex items-center justify-center text-sm font-medium transition-all ${
+                      className={`h-11 border rounded-sm flex items-center justify-center text-xs font-semibold transition-all ${
                         selectedSize === s 
                           ? 'border-primary bg-primary text-white' 
                           : 'border-border bg-white text-primary hover:border-primary'
@@ -191,10 +217,10 @@ export function ProductDetailClient({ product, relatedProducts }: { product: any
             )}
 
             {/* Actions */}
-            <div className="flex gap-4 mb-12">
+            <div className="flex gap-4 mb-10">
               <Button 
                 size="lg" 
-                className="flex-1 h-14 bg-primary hover:bg-accent rounded-sm text-xs tracking-[0.15em] uppercase font-semibold transition-colors"
+                className="flex-1 h-14 bg-primary hover:bg-accent text-white rounded-sm text-xs tracking-[0.15em] uppercase font-semibold transition-colors"
                 onClick={handleAddToCart}
                 disabled={product.stock === 0}
               >
@@ -215,14 +241,14 @@ export function ProductDetailClient({ product, relatedProducts }: { product: any
               {/* Details */}
               <div className="border-b border-border">
                 <button 
-                  className="w-full flex justify-between items-center py-5 text-sm uppercase tracking-wider font-medium text-primary"
+                  className="w-full flex justify-between items-center py-4 text-xs uppercase tracking-wider font-bold text-primary"
                   onClick={() => setAccordionOpen({...accordionOpen, details: !accordionOpen.details})}
                 >
                   Product Details
                   {accordionOpen.details ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                 </button>
                 {accordionOpen.details && (
-                  <div className="pb-6 text-muted text-sm leading-relaxed whitespace-pre-wrap">
+                  <div className="pb-5 text-muted text-sm leading-relaxed whitespace-pre-wrap">
                     {product.description}
                   </div>
                 )}
@@ -231,14 +257,14 @@ export function ProductDetailClient({ product, relatedProducts }: { product: any
               {/* Shipping */}
               <div className="border-b border-border">
                 <button 
-                  className="w-full flex justify-between items-center py-5 text-sm uppercase tracking-wider font-medium text-primary"
+                  className="w-full flex justify-between items-center py-4 text-xs uppercase tracking-wider font-bold text-primary"
                   onClick={() => setAccordionOpen({...accordionOpen, shipping: !accordionOpen.shipping})}
                 >
                   Shipping & Returns
                   {accordionOpen.shipping ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                 </button>
                 {accordionOpen.shipping && (
-                  <div className="pb-6 text-muted text-sm leading-relaxed space-y-3">
+                  <div className="pb-5 text-muted text-sm leading-relaxed space-y-2">
                     <p>• Nationwide Cash on Delivery (COD) available.</p>
                     <p>• Free shipping on orders over Rs. 5,000.</p>
                     <p>• Standard delivery within 3-5 working days.</p>
@@ -249,7 +275,7 @@ export function ProductDetailClient({ product, relatedProducts }: { product: any
             </div>
             
             {/* Share */}
-            <div className="mt-8 flex items-center gap-2 text-sm text-muted cursor-pointer hover:text-primary transition-colors w-fit">
+            <div className="mt-6 flex items-center gap-2 text-xs text-muted cursor-pointer hover:text-primary transition-colors w-fit">
               <Share2 className="w-4 h-4" />
               <span>Share this product</span>
             </div>

@@ -3,6 +3,7 @@ import Image from 'next/image'
 import prisma from '@/lib/prisma'
 import { ArrowRight } from 'lucide-react'
 import { ProductCard } from '@/components/storefront/ProductCard'
+import { DealBanner } from '@/components/storefront/DealBanner'
 import { NewsletterForm } from '@/components/storefront/NewsletterForm'
 
 export const dynamic = 'force-dynamic'
@@ -18,27 +19,84 @@ export const metadata = {
   },
 }
 
-export default async function StorefrontPage() {
-  const featuredProducts = await prisma.product.findMany({
-    where: { isFeatured: true, isVisible: true },
-    include: { category: true },
-    take: 4,
-  })
+// Fallback products in case database is unreachable
+const fallbackProducts = [
+  {
+    id: 'f1',
+    name: 'Classic White Shalwar Kameez',
+    slug: 'classic-white-shalwar-kameez',
+    price: 3500,
+    comparePrice: 5000,
+    stock: 4,
+    images: JSON.stringify(['https://images.unsplash.com/photo-1593032465175-481ac7f401a0?w=800&q=80']),
+    category: { name: "Men's Stitched" }
+  },
+  {
+    id: 'f2',
+    name: 'Premium Wash & Wear Suit',
+    slug: 'premium-wash-and-wear-suit',
+    price: 2800,
+    comparePrice: 4000,
+    stock: 12,
+    images: JSON.stringify(['https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w=800&q=80']),
+    category: { name: "Men's Unstitched" }
+  },
+  {
+    id: 'f3',
+    name: 'Chiffon Party Wear Dress',
+    slug: 'chiffon-party-wear-dress',
+    price: 8500,
+    comparePrice: 12000,
+    stock: 3,
+    images: JSON.stringify(['https://images.unsplash.com/photo-1617137968427-85924c800a22?w=800&q=80']),
+    category: { name: "Women's Stitched" }
+  },
+  {
+    id: 'f4',
+    name: 'Authentic Wool Pakol',
+    slug: 'authentic-wool-pakol',
+    price: 1200,
+    comparePrice: 1800,
+    stock: 5,
+    images: JSON.stringify(['https://images.unsplash.com/photo-1542282088-fe8426682b8f?w=800&q=80']),
+    category: { name: 'Caps & Headwear' }
+  }
+]
 
-  const newArrivals = await prisma.product.findMany({
-    where: { isVisible: true },
-    include: { category: true },
-    orderBy: { createdAt: 'desc' },
-    take: 6,
-  })
+export default async function StorefrontPage() {
+  let featuredProducts: any[] = []
+  let newArrivals: any[] = []
+
+  try {
+    featuredProducts = await prisma.product.findMany({
+      where: { isFeatured: true, isVisible: true },
+      include: { category: true },
+      take: 4,
+    })
+
+    newArrivals = await prisma.product.findMany({
+      where: { isVisible: true },
+      include: { category: true },
+      orderBy: { createdAt: 'desc' },
+      take: 6,
+    })
+  } catch (error) {
+    console.error("DB connection fallback activated:", error)
+    featuredProducts = fallbackProducts
+    newArrivals = fallbackProducts
+  }
+
+  if (featuredProducts.length === 0) featuredProducts = fallbackProducts
+  if (newArrivals.length === 0) newArrivals = fallbackProducts
 
   return (
     <div className="overflow-x-hidden">
 
-      {/* ─── HERO ─── */}
-      {/* Mobile: stacked image then text. Desktop: true split 50/50. */}
-      <section aria-label="Hero" className="flex flex-col md:flex-row min-h-[100svh] md:h-[92vh]">
+      {/* Limited Time Flash Deal Banner */}
+      <DealBanner />
 
+      {/* ─── HERO ─── */}
+      <section aria-label="Hero" className="flex flex-col md:flex-row min-h-[90svh] md:h-[90vh]">
         {/* Image — full width on mobile, half on desktop */}
         <div className="relative w-full h-[60vw] min-h-[280px] md:h-auto md:flex-1 order-1 md:order-2">
           <Image
@@ -49,7 +107,6 @@ export default async function StorefrontPage() {
             sizes="(max-width: 768px) 100vw, 50vw"
             className="object-cover object-top"
           />
-          {/* subtle vignette at bottom on mobile so text doesn't clash if we layer */}
           <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-ivory to-transparent md:hidden" />
         </div>
 
@@ -115,10 +172,7 @@ export default async function StorefrontPage() {
             <h2 className="font-serif text-3xl md:text-4xl text-primary">Shop by Category</h2>
           </div>
 
-          {/* Mobile: 2-column grid. Desktop: asymmetric 3-col */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
-
-            {/* Men's Stitched — tall on desktop */}
             <Link href="/collections/mens-stitched" className="group relative overflow-hidden bg-stone-900 col-span-1 aspect-[2/3]">
               <Image
                 src="https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=700&q=80&auto=format&fit=crop"
@@ -134,7 +188,6 @@ export default async function StorefrontPage() {
               </div>
             </Link>
 
-            {/* Men's Unstitched */}
             <Link href="/collections/mens-unstitched" className="group relative overflow-hidden bg-stone-900 col-span-1 aspect-[2/3]">
               <Image
                 src="https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w=700&q=80&auto=format&fit=crop"
@@ -150,7 +203,6 @@ export default async function StorefrontPage() {
               </div>
             </Link>
 
-            {/* Women's — spans 2 cols on mobile, 1 col on desktop */}
             <Link href="/collections/womens-stitched" className="group relative overflow-hidden bg-stone-900 col-span-2 md:col-span-1 aspect-[16/9] md:aspect-[2/3]">
               <Image
                 src="https://images.unsplash.com/photo-1610419356163-fdfbe17cfbcf?w=700&q=80&auto=format&fit=crop"
@@ -166,7 +218,6 @@ export default async function StorefrontPage() {
               </div>
             </Link>
 
-            {/* Caps — small card */}
             <Link href="/collections/caps-headwear" className="group relative overflow-hidden bg-stone-900 col-span-1 aspect-square">
               <Image
                 src="https://images.unsplash.com/photo-1614251056798-0a63eda2bb25?w=500&q=80&auto=format&fit=crop"
@@ -182,7 +233,6 @@ export default async function StorefrontPage() {
               </div>
             </Link>
 
-            {/* Western Wear — small card */}
             <Link href="/collections/western-wear" className="group relative overflow-hidden bg-stone-900 col-span-1 aspect-square">
               <Image
                 src="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500&q=80&auto=format&fit=crop"
@@ -202,36 +252,32 @@ export default async function StorefrontPage() {
       </section>
 
       {/* ─── FEATURED PRODUCTS ─── */}
-      {featuredProducts.length > 0 && (
-        <section aria-label="Featured Products" className="py-14 md:py-20 bg-white">
-          <div className="px-5 sm:px-8 md:container md:mx-auto md:px-6">
-            <div className="flex items-end justify-between mb-8 md:mb-12">
-              <div>
-                <p className="text-[10px] tracking-[0.25em] uppercase text-accent font-bold mb-2">Handpicked</p>
-                <h2 className="font-serif text-3xl md:text-4xl text-primary">Featured Pieces</h2>
-              </div>
-              <Link
-                href="/collections/all"
-                className="text-[11px] tracking-[0.1em] uppercase font-semibold text-primary hover:text-accent flex items-center gap-1.5 transition-colors"
-              >
-                View all <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
+      <section aria-label="Featured Products" className="py-14 md:py-20 bg-white">
+        <div className="px-5 sm:px-8 md:container md:mx-auto md:px-6">
+          <div className="flex items-end justify-between mb-8 md:mb-12">
+            <div>
+              <p className="text-[10px] tracking-[0.25em] uppercase text-accent font-bold mb-2">Handpicked Deals</p>
+              <h2 className="font-serif text-3xl md:text-4xl text-primary">Featured Deals (30% - 40% OFF)</h2>
             </div>
-
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-8 md:gap-x-6 md:gap-y-12">
-              {featuredProducts.map(product => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
+            <Link
+              href="/collections/all"
+              className="text-[11px] tracking-[0.1em] uppercase font-semibold text-primary hover:text-accent flex items-center gap-1.5 transition-colors"
+            >
+              View all <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
           </div>
-        </section>
-      )}
+
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-8 md:gap-x-6 md:gap-y-12">
+            {featuredProducts.map(product => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* ─── HERITAGE STORY ─── */}
-      {/* Asymmetric layout: image left, text right on desktop. Stacked on mobile. */}
       <section aria-label="Our Heritage" className="bg-[#1A1A1A] text-white">
         <div className="flex flex-col md:flex-row">
-          {/* Image */}
           <div className="relative w-full h-64 md:h-auto md:w-1/2 shrink-0">
             <Image
               src="https://images.unsplash.com/photo-1626497764746-6dc36546b388?w=900&q=80&auto=format&fit=crop"
@@ -243,7 +289,6 @@ export default async function StorefrontPage() {
             <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#1A1A1A] hidden md:block" />
           </div>
 
-          {/* Text */}
           <div className="flex flex-col justify-center px-5 sm:px-8 md:px-16 lg:px-20 py-12 md:py-20 md:w-1/2">
             <p className="text-[10px] tracking-[0.3em] uppercase text-accent font-bold mb-5 flex items-center gap-2">
               <span className="w-6 h-px bg-accent" />
@@ -266,37 +311,33 @@ export default async function StorefrontPage() {
       </section>
 
       {/* ─── NEW ARRIVALS ─── */}
-      {newArrivals.length > 0 && (
-        <section aria-label="New Arrivals" className="py-14 md:py-20 bg-ivory">
-          <div className="px-5 sm:px-8 md:container md:mx-auto md:px-6 mb-8 md:mb-12 flex items-end justify-between">
-            <h2 className="font-serif text-3xl md:text-4xl text-primary">New Arrivals</h2>
-            <Link
-              href="/collections/all"
-              className="text-[11px] tracking-[0.1em] uppercase font-semibold text-primary hover:text-accent flex items-center gap-1.5 transition-colors"
-            >
-              View all <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
+      <section aria-label="New Arrivals" className="py-14 md:py-20 bg-ivory">
+        <div className="px-5 sm:px-8 md:container md:mx-auto md:px-6 mb-8 md:mb-12 flex items-end justify-between">
+          <h2 className="font-serif text-3xl md:text-4xl text-primary">New Arrivals</h2>
+          <Link
+            href="/collections/all"
+            className="text-[11px] tracking-[0.1em] uppercase font-semibold text-primary hover:text-accent flex items-center gap-1.5 transition-colors"
+          >
+            View all <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
 
-          {/* Horizontal scroll on mobile, 3-col grid on desktop */}
-          <div className="md:hidden flex overflow-x-auto pb-4 gap-4 px-5 no-scrollbar snap-x snap-mandatory">
-            {newArrivals.map(product => (
-              <div key={product.id} className="w-[65vw] shrink-0 snap-start">
-                <ProductCard product={product} />
-              </div>
-            ))}
-          </div>
+        <div className="md:hidden flex overflow-x-auto pb-4 gap-4 px-5 no-scrollbar snap-x snap-mandatory">
+          {newArrivals.map(product => (
+            <div key={product.id} className="w-[65vw] shrink-0 snap-start">
+              <ProductCard product={product} />
+            </div>
+          ))}
+        </div>
 
-          <div className="hidden md:grid md:container md:mx-auto md:px-6 grid-cols-3 lg:grid-cols-6 gap-x-6 gap-y-10">
-            {newArrivals.map(product => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        </section>
-      )}
+        <div className="hidden md:grid md:container md:mx-auto md:px-6 grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-10">
+          {newArrivals.map(product => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </div>
+      </section>
 
       {/* ─── SOCIAL PROOF / MATERIAL QUALITY ─── */}
-      {/* A content section that feels earned and specific — not generic 3-icon cards */}
       <section aria-label="Why choose us" className="py-14 md:py-20 bg-white border-t border-border">
         <div className="px-5 sm:px-8 md:container md:mx-auto md:px-6">
           <div className="grid md:grid-cols-2 gap-12 md:gap-20 items-center">
@@ -328,7 +369,6 @@ export default async function StorefrontPage() {
               </ul>
             </div>
 
-            {/* Image with an overlaid stat */}
             <div className="relative aspect-[4/5] hidden md:block">
               <Image
                 src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80&auto=format&fit=crop"
