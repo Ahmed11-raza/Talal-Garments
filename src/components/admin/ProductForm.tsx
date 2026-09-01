@@ -6,13 +6,25 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { X, Upload, Plus, Link as LinkIcon } from 'lucide-react'
+import { X, Upload, Link as LinkIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import Image from 'next/image'
 
 interface ProductFormProps {
   initialData?: any
   categories: any[]
+}
+
+const parseSafeJson = (data: any, fallback: any) => {
+  if (!data) return fallback
+  if (Array.isArray(data)) return data
+  if (typeof data === 'object') return data
+  try {
+    const parsed = JSON.parse(data)
+    return Array.isArray(parsed) || typeof parsed === 'object' ? parsed : fallback
+  } catch {
+    return typeof data === 'string' && data.startsWith('http') ? [data] : fallback
+  }
 }
 
 export function ProductForm({ initialData, categories }: ProductFormProps) {
@@ -24,24 +36,24 @@ export function ProductForm({ initialData, categories }: ProductFormProps) {
     name: initialData?.name || '',
     slug: initialData?.slug || '',
     description: initialData?.description || '',
-    price: initialData?.price || '',
-    comparePrice: initialData?.comparePrice || '',
+    price: initialData?.price !== undefined ? String(initialData.price) : '',
+    comparePrice: initialData?.comparePrice !== undefined && initialData?.comparePrice !== null ? String(initialData.comparePrice) : '',
     categoryId: initialData?.categoryId || (categories.length > 0 ? categories[0].id : ''),
-    stock: initialData?.stock || 0,
+    stock: initialData?.stock !== undefined ? String(initialData.stock) : '10',
     isVisible: initialData?.isVisible ?? true,
     isFeatured: initialData?.isFeatured ?? false,
   })
 
-  // Parse JSON strings from SQLite if present
-  const parsedImages = initialData?.images ? (typeof initialData.images === 'string' ? JSON.parse(initialData.images) : initialData.images) : []
-  const parsedSizes = initialData?.sizes ? (typeof initialData.sizes === 'string' ? JSON.parse(initialData.sizes) : initialData.sizes) : ['S', 'M', 'L', 'XL']
-  const parsedColors = initialData?.colors ? (typeof initialData.colors === 'string' ? JSON.parse(initialData.colors) : initialData.colors) : [{ name: 'Default', hex: '#000000' }]
+  // Safe parsing for images, sizes, colors
+  const parsedImages = parseSafeJson(initialData?.images, [])
+  const parsedSizes = parseSafeJson(initialData?.sizes, ['S', 'M', 'L', 'XL'])
+  const parsedColors = parseSafeJson(initialData?.colors, [{ name: 'Default', hex: '#000000' }])
 
-  const [images, setImages] = useState<string[]>(parsedImages)
+  const [images, setImages] = useState<string[]>(Array.isArray(parsedImages) ? parsedImages : [])
   const [imageUrl, setImageUrl] = useState('')
-  const [sizes, setSizes] = useState<string[]>(parsedSizes)
+  const [sizes, setSizes] = useState<string[]>(Array.isArray(parsedSizes) ? parsedSizes : ['S', 'M', 'L'])
   const [newSize, setNewSize] = useState('')
-  const [colors, setColors] = useState<{name: string, hex: string}[]>(parsedColors)
+  const [colors, setColors] = useState<{name: string, hex: string}[]>(Array.isArray(parsedColors) ? parsedColors : [{ name: 'Default', hex: '#000000' }])
   const [newColorName, setNewColorName] = useState('')
   const [newColorHex, setNewColorHex] = useState('#000000')
 
@@ -88,9 +100,9 @@ export function ProductForm({ initialData, categories }: ProductFormProps) {
     try {
       const payload = {
         ...formData,
-        price: parseInt(formData.price as string),
+        price: parseInt(formData.price as string) || 0,
         comparePrice: formData.comparePrice ? parseInt(formData.comparePrice as string) : null,
-        stock: parseInt(formData.stock as string),
+        stock: parseInt(formData.stock as string) || 0,
         images,
         sizes,
         colors
@@ -269,8 +281,8 @@ export function ProductForm({ initialData, categories }: ProductFormProps) {
             <h3 className="font-medium text-primary">Colors & Swatches</h3>
             <div className="flex flex-wrap gap-2 mb-2">
               {colors.map(color => (
-                <span key={color.name} className="bg-ivory border border-border px-2 py-1 text-xs rounded-sm flex items-center">
-                  <span className="w-3 h-3 rounded-full mr-1" style={{ backgroundColor: color.hex }} />
+                <span key={color.name} className="bg-ivory border border-border px-2 py-1 text-xs rounded-sm flex items-center font-medium">
+                  <span className="w-3 h-3 rounded-full mr-1" style={{ backgroundColor: color.hex || '#000' }} />
                   {color.name}
                   <button type="button" onClick={() => setColors(colors.filter(c => c.name !== color.name))} className="ml-2 text-error"><X className="w-3 h-3" /></button>
                 </span>
